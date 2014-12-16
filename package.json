@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "binary-xhr": "0.0.2",
+    "duplexify": "^3.2.0",
+    "ecstatic": "^0.5.7",
     "icosphere": "^1.0.0",
     "mesh-viewer": "^0.0.1",
     "midi-port-holder": "^2.0.1",
