@@ -1,0 +1,24 @@
+{
+  "name": "mpd",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "watchify index.js -o bundle.js -v & node test.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "binary-xhr": "0.0.2",
+    "icosphere": "^1.0.0",
+    "mesh-viewer": "^0.0.1",
+    "midi-port-holder": "^2.0.1",
+    "midi-stream": "^1.0.2",
+    "nets": "^2.0.0",
+    "observ": "^0.2.0",
+    "run-parallel": "^1.0.0",
+    "webaudio": "^2.0.0",
+    "websocket-stream": "^1.1.1",
+    "ws": "^0.6.3"
+  }
+}
