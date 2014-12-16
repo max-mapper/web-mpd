@@ -47,12 +47,12 @@ var on = {
 var samples = {
   "0": "Hat005.wav",
   "1": "Shaker10.wav",
-  "2": "Vintage Rave Stab 51.wav",
-  "3": "ab synth stab 02 lo long.wav",
+  "2": "Vintage-Rave-Stab-51.wav",
+  "3": "ab-synth-stab-02-lo-long.wav",
   "4": "Kick314.wav",
   "5": "Snare207.wav",
-  "6": "Vintage Rave Stab 95.wav",
-  "7": "sb synth stab.wav"
+  "6": "Vintage-Rave-Stab-95.wav",
+  "7": "sb-synth-stab.wav"
 }
 
 var buffers = {}
@@ -87,11 +87,13 @@ function play(buff, gain) {
 
 function connect() {
   var stream = ws('ws://localhost:8343')
+
   var viewer = meshViewer()
   var mesh, lastVal, cam
 
   viewer.on('viewer-init', function() {
-    mesh = viewer.createMesh(icosphere(1.1))
+    var ico = icosphere(1.1)
+    mesh = viewer.createMesh(ico)
     viewer.camera.distance = 3
   })
 
@@ -100,7 +102,6 @@ function connect() {
       viewer.camera.distance = cam
       cam = undefined
     }
-
     mesh.draw({
       lightPosition: [
           Math.cos(lastVal) * lastVal * 3
@@ -109,9 +110,7 @@ function connect() {
       ]
     })
   })
-  
-  window.viewer = viewer
-  
+
   stream.on('data', function(o) {
     var evt = JSON.parse(o)
     var pressed = evt.slice(0, 2).join('-')
@@ -124,8 +123,10 @@ function connect() {
     if (!buffer) return
     if (velocity) velocity = scale(velocity, 0, 127, 0, 1)
     lastVal = evt[1] + Math.random() * 10
-    cam = lastVal - 59
-    if (onKey) play(buffer, velocity)
+    if (onKey) {
+      play(buffer, velocity)
+      cam = lastVal - 60
+    }
   })
 }
 

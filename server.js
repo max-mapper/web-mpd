@@ -1,6 +1,5 @@
 var WebSocketServer = require('ws').Server
 var http = require('http')
-var ecstatic = require('ecstatic')
 var websocket = require('websocket-stream')
 var duplexify = require('duplexify')
 var server = null
@@ -19,7 +18,7 @@ module.exports.start = function(opts, cb) {
     opts = {};
   }
 
-  server = http.createServer(ecstatic('./'))
+  server = http.createServer()
   opts.server = server
 
   var wss = new WebSocketServer(opts)
@@ -40,7 +39,7 @@ module.exports.start = function(opts, cb) {
     })
     console.log('websocket conn')
   })
-
+  console.log('starting server on port', port)
   server.listen(port, cb)
 }
 
