@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "beefy index.js:bundle.js & node test.js"
+    "start": "beefy index.js:bundle.js --watchify=false"
   },
   "author": "",
   "license": "ISC",
@@ -24,7 +24,6 @@
     "ws": "^0.6.3"
   },
   "devDependencies": {
-    "beefy": "^2.1.1",
-    "watchify": "^2.2.1"
+    "beefy": "^2.1.1"
   }
 }

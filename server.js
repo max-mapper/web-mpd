@@ -27,6 +27,10 @@ module.exports.start = function(opts, cb) {
 
   var duplex = midi('Akai MPD32 Port 1', 0)
   var proxy = duplexify()
+  duplex.on('data', function(data) {
+    console.log(data)
+    proxy.write(JSON.stringify(data))
+  })
 
   wss.on('connection', function(ws) {
     var stream = websocket(ws)
@@ -34,9 +38,6 @@ module.exports.start = function(opts, cb) {
       proxy.setWritable(null)
     })
     proxy.setWritable(stream)
-    duplex.on('data', function(data) {
-      proxy.write(JSON.stringify(data))
-    })
     console.log('websocket conn')
   })
   console.log('starting server on port', port)
