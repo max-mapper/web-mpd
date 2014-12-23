@@ -1,186 +1,280 @@
 var ws = require('websocket-stream')
+var vkey = require('vkey')
 var nets = require('nets')
 var parallel = require('run-parallel')
 var meshViewer = require('./viewer.js')
 var icosphere = require('icosphere')
 
-var context = new webkitAudioContext()
+var context = new (window.webkitAudioContext || window.AudioContext)()
 
 var off = {
-  "129-67": '0',
-  "129-69": '1',
-  "129-71": '2',
-  "129-72": '3',
-  "129-60": '4',
-  "129-62": '5',
-  "129-64": '6',
-  "129-65": '7',
-  "128-67": '8',
-  "128-69": '9',
-  "128-71": '10',
-  "128-72": '11',
-  "128-60": '12',
-  "128-62": '13',
-  "128-64": '14',
-  "128-65": '15'
+  // "129-67": '0',
+  // "129-69": '1',
+  // "129-71": '2',
+  // "129-72": '3',
+  // "129-60": '4',
+  // "129-62": '5',
+  // "129-64": '6',
+  // "129-65": '7',
+  // "128-67": '8',
+  // "128-69": '9',
+  // "128-71": '10',
+  // "128-72": '11',
+  // "128-60": '12',
+  // "128-62": '13',
+  // "128-64": '14',
+  // "128-65": '15'
 }
 
 var on = {
-  "145-67": '0',
-  "145-69": '1',
-  "145-71": '2',
-  "145-72": '3',
-  "145-60": '4',
-  "145-62": '5',
-  "145-64": '6',
-  "145-65": '7',
-  "144-67": '8',
-  "144-69": '9',
-  "144-71": '10',
-  "144-72": '11',
-  "144-60": '12',
-  "144-62": '13',
-  "144-64": '14',
-  "144-65": '15',
-  "176-119": 'record',
-  "176-115": 'record',
-  "146-48": '16',
-  "146-49": '17',
-  "146-50": '18',
-  "146-51": '19',
-  "146-44": '20',
-  "146-45": '21',
-  "146-46": '22',
-  "146-47": '23',
-  "146-40": '24',
-  "146-41": '25',
-  "146-42": '26',
-  "146-43": '27',
-  "146-36": '28',
-  "146-37": '29',
-  "146-38": '30',
-  "146-39": '31'
+  "Z": "0",
+  "X": "1",
+  "C": "2",
+  "V": "3",
+  "A": "4",
+  "S": "5",
+  "D": "6",
+  "F": "7",
+  "Q": "8",
+  "W": "9",
+  "E": "10",
+  "R": "11",
+  "B": "12",
+  "N": "13",
+  "M": "14",
+  "G": "15",
+  "H": "16",
+  "J": "17",
+  "T": "18",
+  "Y": "19",
+  "U": "20",
+  "5": "21",
+  "6": "22",
+  "7": "23",
+  "1": "24",
+  "2": "25",
+  "3": "26",
+  "4": "27",
+  "8": "28",
+  "9": "29",
+  "10": "30",
+  "11": "31",
+  "I": "32",
+  "O": "33",
+  // "P": "34",
+  "[": "35",
+  "K": "36",
+  "L": "37",
+  ";": "38",
+  "'": "39",
+  "<": "40",
+  ">": "41",
+  "/": "42",
+//   "1": "12",
+//   "2": "13",
+//   "3": "14",
+//   "4": "15",
+  "P": "record",
+  "176-102": 'record',
+  "144-36": "0",
+  "144-37": "1",
+  "144-38": "2",
+  "144-39": "3",
+  "144-40": "4",
+  "144-41": "5",
+  "144-42": "6",
+  "144-43": "7",
+  "144-44": "8",
+  "144-45": "9",
+  "144-46": "10",
+  "144-47": "11",
+  "144-48": "12",
+  "144-49": "13",
+  "144-50": "14",
+  "144-51": "15",
+  "144-52": "16",
+  "144-53": "17",
+  "144-54": "18",
+  "144-55": "19",
+  "144-56": "20",
+  "144-57": "21",
+  "144-58": "22",
+  "144-59": "23",
+  "144-60": "24",
+  "144-61": "25",
+  "144-62": "26",
+  "144-63": "27",
+  "144-64": "28",
+  "144-65": "29",
+  "144-66": "30",
+  "144-67": "31",
+  "144-68": "32",
+  "144-69": "33",
+  "144-70": "34",
+  "144-71": "35",
+  "144-72": "36",
+  "144-73": "37",
+  "144-74": "38",
+  "144-75": "39",
+  "144-76": "40",
+  "144-77": "41",
+  "144-78": "42",
+  "144-79": "43",
+  "144-80": "44",
+  "144-81": "45",
+  "144-82": "46",
+  "144-83": "47",
+  "144-84": "48",
+  "144-85": "49",
+  "144-86": "50",
+  "144-87": "51",
+  "144-88": "52",
+  "144-89": "53",
+  "144-90": "54",
+  "144-91": "55",
+  "144-92": "56",
+  "144-93": "57",
+  "144-94": "58",
+  "144-95": "59",
+  "144-96": "60",
+  "144-97": "61",
+  "144-98": "62",
+  "144-99": "63"
 }
+
 
 var samples = {
-  "0": "Hat005.wav",
-  "1": "Shaker10.wav",
-  "2": "Vintage-Rave-Stab-51.wav",
-  "3": "ab-synth-stab-02-lo-long.wav",
-  "4": "Kick314.wav",
-  "5": "Snare207.wav",
-  // "6": "Vintage-Rave-Stab-95.wav",
-  // "7": "sb-synth-stab.wav",
-  "8": "trap-2/loop_5_full_140.wav",
-  "9": "trap-2/trap_bass_Gminor_140.wav",
-  "10": "trap-2/trap_bleeps7_140_loop3_Amin.wav",
-  "11": "trap-2/trap_effects_orchestral_slur_riser_c.wav",
-  "12": "trap-2/trap_horns_loops_2_fminor_140.wav",
-  "13": "trap-2/trap_loops_clowny_f.wav",
-  "14": "trap-2/trap_orchestral_c_minor_brass_140.wav",
-  "15": "trap-2/trap_siren_4.wav",
-  "6": "trap-2/trap_snare_roll_1_140.wav",
-  "7": "trap-2/trap_synths_harsh_pars_F_140.wav",
-  // "8": "bb14x6-snare/TMKD_SNARE1_BB14x6_L1_01.wav",
-  // "8-1": "bb14x6-snare/TMKD_SNARE1_BB14x6_L1_01.wav",
-  // "8-2": "bb14x6-snare/TMKD_SNARE1_BB14x6_L2_01.wav",
-  // "8-3": "bb14x6-snare/TMKD_SNARE1_BB14x6_L3_01.wav",
-  // "8-4": "bb14x6-snare/TMKD_SNARE1_BB14x6_L4_01.wav",
-  // "8-5": "bb14x6-snare/TMKD_SNARE1_BB14x6_L5_01.wav",
-  // "8-6": "bb14x6-snare/TMKD_SNARE1_BB14x6_L6_01.wav",
-  // "8-7": "bb14x6-snare/TMKD_SNARE1_BB14x6_L7_01.wav",
-  // "8-8": "bb14x6-snare/TMKD_SNARE1_BB14x6_L8_01.wav",
-  // "9": "bb14x6-snare/TMKD_SNARE1_BB14x6_L1_01.wav",
-  // "9-1": "bb14x6-snare/TMKD_SNARE1_BB14x6_L1_01.wav",
-  // "9-2": "bb14x6-snare/TMKD_SNARE1_BB14x6_L2_01.wav",
-  // "9-3": "bb14x6-snare/TMKD_SNARE1_BB14x6_L3_01.wav",
-  // "9-4": "bb14x6-snare/TMKD_SNARE1_BB14x6_L4_01.wav",
-  // "9-5": "bb14x6-snare/TMKD_SNARE1_BB14x6_L5_01.wav",
-  // "9-6": "bb14x6-snare/TMKD_SNARE1_BB14x6_L6_01.wav",
-  // "9-7": "bb14x6-snare/TMKD_SNARE1_BB14x6_L7_01.wav",
-  // "9-8": "bb14x6-snare/TMKD_SNARE1_BB14x6_L8_01.wav",
-  // "12": "inferno-kick/01.wav",
-  // "12-1": "inferno-kick/01.wav",
-  // "12-2": "inferno-kick/02.wav",
-  // "12-3": "inferno-kick/03.wav",
-  // "12-4": "inferno-kick/04.wav",
-  // "12-5": "inferno-kick/05.wav",
-  // "12-6": "inferno-kick/06.wav",
-  // "12-7": "inferno-kick/01.wav",
-  // "12-8": "inferno-kick/02.wav",
-  // "13": "inferno-kick/01.wav",
-  // "13-1": "inferno-kick/01.wav",
-  // "13-2": "inferno-kick/02.wav",
-  // "13-3": "inferno-kick/03.wav",
-  // "13-4": "inferno-kick/04.wav",
-  // "13-5": "inferno-kick/05.wav",
-  // "13-6": "inferno-kick/06.wav",
-  // "13-7": "inferno-kick/01.wav",
-  // "13-8": "inferno-kick/02.wav",
-  // "10": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-22.wav",
-  // "10-1": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-01.wav",
-  // "10-2": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-04.wav",
-  // "10-3": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-07.wav",
-  // "10-4": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-10.wav",
-  // "10-5": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-14.wav",
-  // "10-6": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-17.wav",
-  // "10-7": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-20.wav",
-  // "10-8": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Closed-22.wav",
-  // "14": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Open-14.wav",
-  // "14-1": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_SemiOpen-01.wav",
-  // "14-2": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_SemiOpen-07.wav",
-  // "14-3": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_SemiOpen-10.wav",
-  // "14-4": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_SemiOpen-14.wav",
-  // "14-5": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Open-01.wav",
-  // "14-6": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Open-07.wav",
-  // "14-7": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Open-10.wav",
-  // "14-8": "Istanbul-Radiant-14-Hihat/Istanbul_Radiant_14_Hihat_Open-14.wav",
-  // "11": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-11.wav",
-  // "11-1": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-01.wav",
-  // "11-2": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-03.wav",
-  // "11-3": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-05.wav",
-  // "11-4": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-06.wav",
-  // "11-5": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-07.wav",
-  // "11-6": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-09.wav",
-  // "11-7": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-10.wav",
-  // "11-8": "Masterwork-RockMaster-18-Crash/Masterwork_RockMaster_18_Crash-11.wav",
-  // "19": "STOMP-CLAPS/clap-01.wav",
-  // "19-1": "STOMP-CLAPS/clap-01.wav",
-  // "19-2": "STOMP-CLAPS/clap-02.wav",
-  // "19-3": "STOMP-CLAPS/clap-03.wav",
-  // "19-4": "STOMP-CLAPS/clap-04.wav",
-  // "19-5": "STOMP-CLAPS/clap-05.wav",
-  // "19-6": "STOMP-CLAPS/clap-06.wav",
-  // "19-7": "STOMP-CLAPS/clap-07.wav",
-  // "19-8": "STOMP-CLAPS/clap-07.wav",
-  // "18": "STOMP-CLAPS/stomp-02.wav",
-  // "18-1": "STOMP-CLAPS/stomp-02.wav",
-  // "18-2": "STOMP-CLAPS/stomp-03.wav",
-  // "18-3": "STOMP-CLAPS/stomp-04.wav",
-  // "18-4": "STOMP-CLAPS/stomp-05.wav",
-  // "18-5": "STOMP-CLAPS/stomp-06.wav",
-  // "18-6": "STOMP-CLAPS/stomp-07.wav",
-  // "18-7": "STOMP-CLAPS/stomp-08.wav",
-  // "18-8": "STOMP-CLAPS/stomp-09.wav",
-  // "16": "Koan-Snare/05.wav",
-  // "17": "Koan-Snare/06.wav",
-  // "20": "Koan-Snare/01.wav",
-  // "21": "Koan-Snare/02.wav",
-  // "22": "Koan-Snare/03.wav",
-  // "23": "Koan-Snare/04.wav"
-  "16": "trap-1/SOT_ChoppedLoop_10_140bpm.wav",
-  "17": "trap-1/SOT_ChoppedLoop_2_140bpm.wav",
-  "18": "trap-1/SOT_FullDrumLoop_5_140bpm.wav",
-  "19": "trap-1/SOT_KickLoop_3_140bpm.wav",
-  "20": "trap-1/SOT_Music_Loop_9__140_Gm.wav",
-  "21": "trap-1/SOT_SynthLoop_14_G_140bpm.wav",
-  "22": "trap-1/SOT_SynthLoop_1_G_140bpm.wav",
-  "23": "trap-1/SOT_SynthLoop_20_G_140bpm.wav",
-  "24": "trap-1/SOT_SynthLoop_6_G_140bpm.wav",
-  "25": "trap-1/SOT_Vocal_2_140bpm.wav"
+  "0":  "808/808-Clap07.wav",
+  "1":  "808/808-Cowbell2.wav",
+  "2":  "808/hihat.wav",
+  "3":  "808/808-Kicks33.wav",
+  "4":  "808/808-Conga1.wav",
+  "5":  "808/808-Snare25.wav",
+  "6":  "808/808-Tom3.wav",
+  "7":  "windows/Windows XP Balloon.wav",
+  "8":  "windows/Windows XP Battery Critical.wav",
+  "9":  "windows/Windows XP Battery Low.wav",
+  "10": "windows/Windows XP Critical Stop.wav",
+  "11": "windows/Windows XP Default.wav",
+  "12": "windows/Windows XP Ding.wav",
+  "13": "windows/Windows XP Error.wav",
+  "14": "windows/Windows XP Exclamation.wav",
+  "15": "windows/Windows XP Hardware Fail.wav",
+  "16": "windows/Windows XP Hardware Insert.wav",
+  "17": "windows/Windows XP Hardware Remove.wav",
+  "18": "windows/Windows XP Information Bar.wav",
+  "19": "windows/Windows XP Logoff Sound.wav",
+  "20": "windows/Windows XP Logon Sound.wav",
+  "21": "windows/Windows XP Menu Command.wav",
+  "22": "windows/Windows XP Notify.wav",
+  "23": "windows/Windows XP Print complete.wav",
+  "24": "windows/Windows XP Recycle.wav",
+  "25": "windows/Windows XP Ringin.wav",
+  "26": "windows/Windows XP Ringout.wav",
+  "27": "windows/Windows XP Shutdown.wav",
+  "28": "windows/Windows XP Start.wav",
+  "29": "windows/Windows XP Startup.wav",
+  "30": "windows/classic chimes.wav",
+  "31": "windows/classic chord.wav",
+  "32": "windows/classic ding.wav",
+  "33": "windows/classic notify.wav",
+  "34": "windows/classic recycle.wav",
+  "35": "windows/classic start.wav",
+  "36": "windows/classic tada.wav",
+  "37": "windows/windows xp pop-up blocked.wav",
+  "38": "GB_Kit/GB_Crash.wav",
+  "39": "GB_Kit/GB_Hat_1.wav",
+  "40": "GB_Kit/GB_Hat_2.wav",
+  "41": "GB_Kit/GB_Hat_3.wav",
+  "42": "GB_Kit/GB_Hat_4.wav",
+  "43": "GB_Kit/GB_High_Tom.wav",
+  "44": "GB_Kit/GB_Kick_1.wav",
+  "45": "GB_Kit/GB_Kick_2.wav",
+  "46": "GB_Kit/GB_Kick_3.wav",
+  "47": "GB_Kit/GB_Kick_4.wav",
+  "48": "GB_Kit/GB_Kick_5.wav",
+  "49": "GB_Kit/GB_Low_Tom.wav",
+  "50": "GB_Kit/GB_Mid_Tom.wav",
+  "51": "GB_Kit/GB_Ride.wav",
+  "52": "GB_Kit/GB_Snare_1.wav",
+  "53": "GB_Kit/GB_Snare_2.wav",
+  "54": "GB_Kit/GB_Snare_3.wav",
+  "55": "GB_Kit/GB_Snare_4.wav",
+  "56": "GB_Kit/GB_Snare_5.wav",
+  "57": "GB_Kit/GB_Snare_6.wav",
+  "58": "GB_Kit/GB_Snare_7.wav",
+  "59": "GB_Kit/GB_Snare_8.wav",
+  "60": "GB_Kit/GB_Startup.wav",
+  "61": "GB_Kit/GB_Triangle.wav"
+
 }
-
-
+//
+//
+// var samples = {
+//   "0": "stabs/5601 BUZ+RAV.wav",
+//   "1": "stabs/5602 BUZ+RAV.wav",
+//   "2": "stabs/5603 BUZ+RAV.wav",
+//   "3": "stabs/5604 BUZ+RAV.wav",
+//   "4": "stabs/5605 BUZ+RAV.wav",
+//   "5": "stabs/5606 BUZ+RAV.wav",
+//   "6": "stabs/5607 BUZ+RAV.wav",
+//   "7": "stabs/5608 BUZ+RAV.wav",
+//   "8": "stabs/5609 BUZ+RAV.wav",
+//   "9": "stabs/5610 BUZ+RAV.wav",
+//   "10": "stabs/5611 BUZ+RAV.wav",
+//   "11": "stabs/5612 BUZ+RAV.wav",
+//   "12": "stabs/5701 BUZ.CHD.wav",
+//   "13": "stabs/5702 BUZ.CHD.wav",
+//   "14": "stabs/5703 BUZ.CHD.wav",
+//   "15": "stabs/5704 BUZ.CHD.wav",
+//   "16": "stabs/5705 BUZ.CHD.wav",
+//   "17": "stabs/5706 BUZ.CHD.wav",
+//   "18": "stabs/5707 BUZ.CHD.wav",
+//   "19": "stabs/5708 BUZ.CHD.wav",
+//   "20": "stabs/5709 BUZ.CHD.wav",
+//   "21": "stabs/5710 BUZ.CHD.wav",
+//   "22": "stabs/5711 BUZ.CHD.wav",
+//   "23": "stabs/5712 BUZ.CHD.wav",
+//   "24": "stabs/5801 BUZ+BLP.wav",
+//   "25": "stabs/5802 BUZ+BLP.wav",
+//   "26": "stabs/5803 BUZ+BLP.wav",
+//   "27": "stabs/5804 BUZ+BLP.wav",
+//   "28": "stabs/5805 BUZ+BLP.wav",
+//   "29": "stabs/5806 BUZ+BLP.wav",
+//   "30": "stabs/5807 BUZ+BLP.wav",
+//   "31": "stabs/5808 BUZ+BLP.wav",
+//   "32": "stabs/5809 BUZ+BLP.wav",
+//   "33": "stabs/5810 BUZ+BLP.wav",
+//   "34": "stabs/5811 BUZ+BLP.wav",
+//   "35": "stabs/Hoover 02.wav",
+//   "36": "stabs/Hoover 03.wav",
+//   "37": "stabs/Hoover 04.wav",
+//   "38": "stabs/Hoover 05.wav",
+//   "39": "stabs/Hoover 06.wav",
+//   "40": "stabs/Hoover 07.wav",
+//   "41": "stabs/Hoover 08.wav",
+//   "42": "stabs/Stab 1.WAV",
+//   "43": "stabs/Stab 2.WAV",
+//   "44": "stabs/Stab 3.WAV",
+//   "45": "stabs/Stab 4.wav",
+//   "46": "stabs/Stab 5.wav",
+//   "47": "stabs/Stab 6.wav",
+//   "48": "stabs/Stab 7.wav",
+//   "49": "stabs/anastastab.wav",
+//   "50": "stabs/cyclnpno.wav",
+//   "51": "stabs/letthebasskick.wav",
+//   "52": "stabs/old skool bizz 00.wav",
+//   "53": "stabs/old skool bizz 01.wav",
+//   "54": "stabs/old skool bizz 02.wav",
+//   "55": "stabs/old skool bizz 03.wav",
+//   "56": "stabs/old skool bizz 04.wav",
+//   "57": "stabs/old skool bizz 05.wav",
+//   "58": "stabs/old skool bizz 06.wav",
+//   "59": "stabs/old skool bizz 07.wav",
+//   "60": "stabs/old skool bizz 08.wav",
+//   "61": "stabs/old skool bizz 09.wav",
+//   "62": "stabs/old skool bizz 10.wav"
+// }
 
 var buffers = {}
 
@@ -213,11 +307,16 @@ function play(buff, gain) {
 }
 
 var recorded = []
-var recordBuffer, startTime, lastVal
+var recordBuffer, startTime, lastVal, stream
 var recording = false
 
 function connect() {
-  var stream = ws('ws://localhost:8343')
+  stream = ws('ws://localhost:8343')
+  
+  window.addEventListener('keydown', function(e) {
+    var pressed = vkey[e.keyCode]
+    dispatch([pressed, null, 127], pressed)
+  })
 
   var viewer = meshViewer()
   var mesh, cam
@@ -226,33 +325,50 @@ function connect() {
     var ico = icosphere(1.1)
     mesh = viewer.createMesh(ico)
     viewer.camera.distance = 3
-  })
-
-  viewer.on('gl-render', function() {
-    if (cam) {
-      viewer.camera.distance = cam
-      cam = undefined
-    }
-    mesh.draw({
-      lightPosition: [
-          Math.cos(lastVal)
-        , Math.sin(lastVal)
-        , -2
-      ]
+    
+    viewer.on('gl-render', function() {
+      if (cam) {
+        viewer.camera.distance = cam
+        cam = undefined
+      }
+      // var random1 = Math.floor(Math.random()) + 1
+      // var random2 = Math.floor(Math.random()) + 1
+      // viewer.camera.lookAt([0, random1, 0], [0, random2, 0], [0, 0, 0])
+      mesh.draw({
+        lightPosition: [
+            Math.cos(lastVal)
+          , Math.sin(lastVal)
+          , -2
+        ]
+      })
     })
   })
+  
+  window.viewer = viewer
 
-  stream.on('data', function(o) {
+  stream.on('data', parseEvent)
+  
+  function parseEvent(o) {
     var evt = JSON.parse(o)
+    if (evt[2] === 0) return
+    evt[2] = 127
     var pressed = evt.slice(0, 2).join('-')
+    dispatch(evt, pressed)
+  }
+  
+  function dispatch(evt, pressed) {
     var key = getKey(pressed)
     if (!key) return
     if (key === 'record') {
       if (recording) {
+        var firstStop = recorded.length === 0
         if (recordBuffer.length) storeRecording(recordBuffer)
         console.log('stop recording')
         recording = false
-        playback(Date.now(), 0)
+        if (firstStop) {
+          startTime = Date.now()
+          playback(startTime, 0)
+        }
       } else {
         startRecording()
       }
@@ -260,24 +376,29 @@ function connect() {
     }
     if (recording && on[pressed]) recordBuffer.push({data: evt, time: Date.now() - startTime})
     trigger(pressed, key, evt)
-  })
+  }
 }
 
 function startRecording() {
   recording = true
+  if (!startTime) startTime = Date.now()
   recordBuffer = []
-  startTime = Date.now()
   console.log('start recording')
 }
 
 function storeRecording(buffer) {
   recorded = recorded.concat(buffer)
-  recorded.sort(function(a,b) { return a.time - b.time })
+  recorded.sort(function(a, b) {
+    return a.time - b.time
+  })
 }
 
 function playback(start, idx) {
   var evt = recorded[idx]
-  if (!evt && recorded.length) return playback(Date.now(), 0)
+  if (!evt && recorded.length) {
+    startTime = Date.now()
+    return playback(startTime, 0)
+  }
   var current = Date.now() - start
   var time = evt.time - current
   setTimeout(function() {
@@ -298,8 +419,9 @@ function trigger(pressed, key, evt) {
     velocity = scale(velocity, 0, 127, 0, 1)
     buffer = buffers[key + '-' + velocityRange] || buffer
   }
-  lastVal = evt[1] * 10
+  lastVal = evt[2] * Math.random() * 10
   if (on[pressed]) {
+    stream.write(JSON.stringify(evt))
     play(buffer, velocity)
     cam = lastVal - 60
   }

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "beefy index.js:bundle.js --watchify=false"
+    "start": "http-server & watchify index.js -o bundle.js -v & node server.js"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +19,7 @@
     "nets": "^2.0.0",
     "observ": "^0.2.0",
     "run-parallel": "^1.0.0",
+    "vkey": "^1.0.0",
     "webaudio": "^2.0.0",
     "websocket-stream": "^1.1.1",
     "ws": "^0.6.3"
