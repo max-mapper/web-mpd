@@ -2,10 +2,18 @@ var ws = require('websocket-stream')
 var vkey = require('vkey')
 var nets = require('nets')
 var parallel = require('run-parallel')
-var meshViewer = require('./viewer.js')
-var icosphere = require('icosphere')
+// var grid = require('splash-grid')
 
 var context = new (window.webkitAudioContext || window.AudioContext)()
+// var canvas = document.createElement('canvas')
+//
+// document.body.appendChild(canvas)
+// grid(canvas)
+//
+
+var h1 = document.createElement('h1')
+document.body.appendChild(h1)
+h1.setAttribute('style', 'font-size: 500px; font-family: Helvetica; margin: 0; padding: 0; color: #FF851B;')
 
 var off = {
   // "129-67": '0',
@@ -311,42 +319,14 @@ var recordBuffer, startTime, lastVal, stream
 var recording = false
 
 function connect() {
-  stream = ws('ws://localhost:8343')
+  // stream = ws('ws://localhost:8343')
   
   window.addEventListener('keydown', function(e) {
     var pressed = vkey[e.keyCode]
     dispatch([pressed, null, 127], pressed)
   })
 
-  var viewer = meshViewer()
-  var mesh, cam
-
-  viewer.on('viewer-init', function() {
-    var ico = icosphere(1.1)
-    mesh = viewer.createMesh(ico)
-    viewer.camera.distance = 3
-    
-    viewer.on('gl-render', function() {
-      if (cam) {
-        viewer.camera.distance = cam
-        cam = undefined
-      }
-      // var random1 = Math.floor(Math.random()) + 1
-      // var random2 = Math.floor(Math.random()) + 1
-      // viewer.camera.lookAt([0, random1, 0], [0, random2, 0], [0, 0, 0])
-      mesh.draw({
-        lightPosition: [
-            Math.cos(lastVal)
-          , Math.sin(lastVal)
-          , -2
-        ]
-      })
-    })
-  })
-  
-  window.viewer = viewer
-
-  stream.on('data', parseEvent)
+  // stream.on('data', parseEvent)
   
   function parseEvent(o) {
     var evt = JSON.parse(o)
@@ -402,9 +382,15 @@ function playback(start, idx) {
   var current = Date.now() - start
   var time = evt.time - current
   setTimeout(function() {
-    var pressed = evt.data.slice(0, 2).join('-')
-    var key = getKey(pressed)
-    if (key) trigger(pressed, key, evt.data)
+    var pressed1 = evt.data.slice(0, 2).join('-')
+    var pressed2 = evt.data.slice(0, 1).join('-')
+    var key = getKey(pressed1)
+    if (key) {
+      trigger(pressed1, key, evt.data)
+    } else {
+      key = getKey(pressed2)
+      if (key) trigger(pressed2, key, evt.data)
+    }
     idx++
     playback(start, idx)
   }, time)
@@ -421,9 +407,9 @@ function trigger(pressed, key, evt) {
   }
   lastVal = evt[2] * Math.random() * 10
   if (on[pressed]) {
-    stream.write(JSON.stringify(evt))
+    // stream.write(JSON.stringify(evt))
+    h1.innerText = pressed
     play(buffer, velocity)
-    cam = lastVal - 60
   }
 }
 

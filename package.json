@@ -4,12 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "http-server & watchify index.js -o bundle.js -v & node server.js"
+    "start": "wzrd index.js:bundle.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "beefy": "^2.1.1",
     "binary-xhr": "0.0.2",
+    "browserify": "^8.0.1",
     "duplexify": "^3.2.0",
     "ecstatic": "^0.5.7",
     "icosphere": "^1.0.0",
@@ -20,11 +22,11 @@
     "observ": "^0.2.0",
     "run-parallel": "^1.0.0",
     "vkey": "^1.0.0",
+    "watchify": "^2.2.1",
     "webaudio": "^2.0.0",
     "websocket-stream": "^1.1.1",
-    "ws": "^0.6.3"
+    "ws": "^0.6.3",
+    "wzrd": "^1.0.2"
   },
-  "devDependencies": {
-    "beefy": "^2.1.1"
-  }
+  "devDependencies": {}
 }
