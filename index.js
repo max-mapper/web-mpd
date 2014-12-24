@@ -288,7 +288,7 @@ var buffers = {}
 
 var sampleGets = Object.keys(samples).map(function(k) {
   return function(cb) {
-    nets('/samples/' + samples[k], function(err, resp, buff) {
+    nets('samples/' + samples[k], function(err, resp, buff) {
       if (err) return cb(err)
   		context.decodeAudioData(buff.buffer, function(buffer) {
         buffers[k] = buffer
