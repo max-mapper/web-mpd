@@ -30,16 +30,9 @@ var off = {
 
 var buffers = {}
 
-var sampleGets = Object.keys(samples).map(function(k) {
-  return function(cb) {
-    nets('samples/' + samples[k], function(err, resp, buff) {
-      if (err) return cb(err)
-  		context.decodeAudioData(buff.buffer, function(buffer) {
-        buffers[k] = buffer
-        cb()
-  		}, cb)
-    })
-  }
+var sampleGets = Object.keys(samples).map(function(id) {
+  var url = 'samples/' + samples[id]
+  return downloadAudio.bind(null, id, url)
 })
 
 parallel(sampleGets, function(err) {
@@ -47,30 +40,20 @@ parallel(sampleGets, function(err) {
   connect()
 })
 
-function play(buff, gain) {
-  var source = context.createBufferSource()
-  var gainNode = context.createGain()
-  source.buffer = buff
-  gainNode.gain.value = gain || 1
-  source.connect(gainNode)
-  gainNode.connect(context.destination)
-  source.start(0)
-}
-
 var recorded = []
 var recordBuffer, startTime, lastVal, stream
 var recording = false
 
 function connect() {
-  // stream = ws('ws://localhost:8343')
   
   window.addEventListener('keydown', function(e) {
     var pressed = vkey[e.keyCode]
-    pressed = keyNames[pressed] || pressed
+    pressed = (keyNames[pressed] || pressed).toLowerCase()
     dispatch([pressed, null, 127], pressed)
   })
 
-  // stream.on('data', parseEvent)
+  document.documentElement.addEventListener('drop', doDrop)
+  document.documentElement.addEventListener('dragover', dragover)
   
   function parseEvent(o) {
     var evt = JSON.parse(o)
@@ -97,9 +80,29 @@ function connect() {
       }
       return
     }
-    if (recording && on[pressed]) recordBuffer.push({data: evt, time: Date.now() - startTime})
+    if (recording && buffers[pressed]) recordBuffer.push({data: evt, time: Date.now() - startTime})
     trigger(pressed, key, evt)
   }
+}
+
+function downloadAudio(id, url, cb){
+  nets(url, function(err, resp, buff) {
+    if (err) return cb(err)
+    context.decodeAudioData(buff.buffer, function(buffer) {
+      buffers[id] = buffer
+      cb()
+    }, cb)
+  })
+}
+
+function play(buff, gain) {
+  var source = context.createBufferSource()
+  var gainNode = context.createGain()
+  source.buffer = buff
+  gainNode.gain.value = gain || 1
+  source.connect(gainNode)
+  gainNode.connect(context.destination)
+  source.start(0)
 }
 
 function startRecording() {
@@ -115,31 +118,40 @@ function storeRecording(buffer) {
   })
 }
 
+function dragover(event) {
+  event.preventDefault()
+  event.stopPropagation()
+}
+function doDrop(event) {
+  event.preventDefault()
+  event.stopPropagation()
+  var target = event.target
+  if (!target.classList.contains('keyboard-key')) return
+  var key = target.getAttribute('data-key')
+  var url = 'http://crossorigin.me/'+event.dataTransfer.getData('URL')
+  downloadAudio(key, url, function(){})
+}
+
 function playback(start, idx) {
   var evt = recorded[idx]
   if (!evt && recorded.length) {
     startTime = Date.now()
     return playback(startTime, 0)
   }
+  if (!evt) return
   var current = Date.now() - start
   var time = evt.time - current
   setTimeout(function() {
-    var pressed1 = evt.data.slice(0, 2).join('-')
-    var pressed2 = evt.data.slice(0, 1).join('-')
-    var key = getKey(pressed1)
-    if (key) {
-      trigger(pressed1, key, evt.data)
-    } else {
-      key = getKey(pressed2)
-      if (key) trigger(pressed2, key, evt.data)
-    }
+    var pressed = evt.data[0]
+    trigger(pressed, pressed, evt.data)
     idx++
     playback(start, idx)
   }, time)
 }
 
 function trigger(pressed, key, evt) {
-  var velocity = evt[2]
+  // var velocity = evt[2]
+  var velocity = null
   var buffer = buffers[key]
   if (!buffer) return
   if (velocity) {
@@ -148,7 +160,7 @@ function trigger(pressed, key, evt) {
     buffer = buffers[key + '-' + velocityRange] || buffer
   }
   lastVal = evt[2] * Math.random() * 10
-  if (on[pressed]) {
+  if (pressed) {
     showKeypress(pressed)
     play(buffer, velocity)
   }
@@ -165,10 +177,7 @@ function showKeypress(pressed) {
 }
 
 function getKey(pressed) {
-  var onKey = on[pressed]
-  var offKey = off[pressed]
-  var key = onKey || offKey
-  return key
+  return pressed
 }
 
 function scale( x, fromLow, fromHigh, toLow, toHigh ) {
