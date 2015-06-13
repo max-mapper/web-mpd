@@ -11,9 +11,9 @@ var context = new (window.webkitAudioContext || window.AudioContext)()
 // grid(canvas)
 //
 
-var h1 = document.createElement('h1')
-document.body.appendChild(h1)
-h1.setAttribute('style', 'font-size: 500px; font-family: Helvetica; margin: 0; padding: 0; color: #FF851B;')
+//var h1 = document.createElement('h1')
+//document.body.appendChild(h1)
+//h1.setAttribute('style', 'font-size: 500px; font-family: Helvetica; margin: 0; padding: 0; color: #FF851B;')
 
 var off = {
   // "129-67": '0',
