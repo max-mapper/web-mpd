@@ -39,6 +39,9 @@ body {
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
 }
+#keyboard li.lastitem {
+    margin-right: 0;
+}
 .capslock,
 .tab,
 .left-shift {
@@ -60,9 +63,7 @@ body {
 #keyboard .right-shift {
     width: 109px;
 }
-.lastitem {
-    margin-right: 0;
-}
+
 .uppercase {
     text-transform: uppercase;
 }
