@@ -249,7 +249,6 @@ function connect() {
   
   function dispatch(evt, pressed) {
     var key = getKey(pressed)
-    console.log('key:', key)
     if (!key) return
     if (key === 'record') {
       if (recording) {
@@ -308,7 +307,6 @@ function playback(start, idx) {
 
 function trigger(pressed, key, evt) {
   var velocity = evt[2]
-  console.log('buffers[key]:', buffers[key])
   var buffer = buffers[key]
   if (!buffer) return
   if (velocity) {
@@ -317,7 +315,6 @@ function trigger(pressed, key, evt) {
     buffer = buffers[key + '-' + velocityRange] || buffer
   }
   lastVal = evt[2] * Math.random() * 10
-  console.log('on[pressed]:', on[pressed])
   if (on[pressed]) {
     showKeypress(pressed)
     play(buffer, velocity)
@@ -325,7 +322,6 @@ function trigger(pressed, key, evt) {
 }
 
 function showKeypress(pressed) {
-  console.log('show:', pressed)
   var keyEl = document.querySelector('li[data-key="'+pressed.toLowerCase()+'"]')
   if (keyEl) {
     keyEl.classList.add('pressed')
@@ -336,7 +332,6 @@ function showKeypress(pressed) {
 }
 
 function getKey(pressed) {
-  console.log('getKey:', pressed)
   var onKey = on[pressed]
   var offKey = off[pressed]
   var key = onKey || offKey
