@@ -9,29 +9,21 @@ var keyNames = require('./config/keyNames')
 
 var context = new (window.AudioContext)()
 
-var off = {
-  // "129-67": '0',
-  // "129-69": '1',
-  // "129-71": '2',
-  // "129-72": '3',
-  // "129-60": '4',
-  // "129-62": '5',
-  // "129-64": '6',
-  // "129-65": '7',
-  // "128-67": '8',
-  // "128-69": '9',
-  // "128-71": '10',
-  // "128-72": '11',
-  // "128-60": '12',
-  // "128-62": '13',
-  // "128-64": '14',
-  // "128-65": '15'
+var oldSamples = localStorage.getItem('samples');
+var samples;
+if (oldSamples) {
+  samples = JSON.parse(oldSamples);
+} else {
+  samples = require('./config/samples');
+  for (var key in samples) {
+    samples[key] = 'samples/' + samples[key];
+  }
 }
 
 var buffers = {}
 
 var sampleGets = Object.keys(samples).map(function(id) {
-  var url = 'samples/' + samples[id]
+  var url = samples[id]
   return downloadAudio.bind(null, id, url)
 })
 
@@ -89,10 +81,18 @@ function downloadAudio(id, url, cb){
   nets(url, function(err, resp, buff) {
     if (err) return cb(err)
     context.decodeAudioData(buff.buffer, function(buffer) {
+      samples[id] = url
+      persistConfig()
+      
       buffers[id] = buffer
       cb()
     }, cb)
   })
+}
+
+function persistConfig(){
+  var json = JSON.stringify(samples);
+  localStorage.setItem('samples', json);
 }
 
 function play(buff, gain) {

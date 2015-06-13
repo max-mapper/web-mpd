@@ -10,4 +10,5 @@ module.exports = {
   '\\': 'backslash',
   '-': 'minus',
   '=': 'equals',
+  '<space>': 'record',
 }
