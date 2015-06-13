@@ -2,32 +2,12 @@ var ws = require('websocket-stream')
 var vkey = require('vkey')
 var nets = require('nets')
 var parallel = require('run-parallel')
-// var grid = require('splash-grid')
 
-var context = new (window.webkitAudioContext || window.AudioContext)()
-// var canvas = document.createElement('canvas')
-//
-// document.body.appendChild(canvas)
-// grid(canvas)
-//
+var samples = require('./config/samples.json')
+var on = require('./config/keyMap.json')
+var keyNames = require('./config/keyNames')
 
-//var h1 = document.createElement('h1')
-//document.body.appendChild(h1)
-//h1.setAttribute('style', 'font-size: 500px; font-family: Helvetica; margin: 0; padding: 0; color: #FF851B;')
-
-var keyNames = {
-  '`': 'backtick',
-  ',': 'comma',
-  '.': 'period',
-  '/': 'forwardslash',
-  ';': 'semicolon',
-  '\'': 'quote',
-  '[': 'openbracket',
-  ']': 'closebracket',
-  '\\': 'backslash',
-  '-': 'minus',
-  '=': 'equals',
-}
+var context = new (window.AudioContext)()
 
 var off = {
   // "129-67": '0',
@@ -47,153 +27,6 @@ var off = {
   // "128-64": '14',
   // "128-65": '15'
 }
-
-var on = require('./keyMap.json');
-
-var samples = {
-  "0":  "808/808-Clap07.wav",
-  "1":  "808/808-Cowbell2.wav",
-  "2":  "808/hihat.wav",
-  "3":  "808/808-Kicks33.wav",
-  "4":  "808/808-Conga1.wav",
-  "5":  "808/808-Snare25.wav",
-  "6":  "808/808-Tom3.wav",
-  "7":  "windows/Windows XP Balloon.wav",
-  "8":  "windows/Windows XP Battery Critical.wav",
-  "9":  "windows/Windows XP Battery Low.wav",
-  "10": "windows/Windows XP Critical Stop.wav",
-  "11": "windows/Windows XP Default.wav",
-  "12": "windows/Windows XP Ding.wav",
-  "13": "windows/Windows XP Error.wav",
-  "14": "windows/Windows XP Exclamation.wav",
-  "15": "windows/Windows XP Hardware Fail.wav",
-  "16": "windows/Windows XP Hardware Insert.wav",
-  "17": "windows/Windows XP Hardware Remove.wav",
-  "18": "windows/Windows XP Information Bar.wav",
-  "19": "windows/Windows XP Logoff Sound.wav",
-  "20": "windows/Windows XP Logon Sound.wav",
-  "21": "windows/Windows XP Menu Command.wav",
-  "22": "windows/Windows XP Notify.wav",
-  "23": "windows/Windows XP Print complete.wav",
-  "24": "windows/Windows XP Recycle.wav",
-  "25": "windows/Windows XP Ringin.wav",
-  "26": "windows/Windows XP Ringout.wav",
-  "27": "windows/Windows XP Shutdown.wav",
-  "28": "windows/Windows XP Start.wav",
-  "29": "windows/Windows XP Startup.wav",
-  "30": "windows/classic chimes.wav",
-  "31": "windows/classic chord.wav",
-  "32": "windows/classic ding.wav",
-  "33": "windows/classic notify.wav",
-  "34": "windows/classic recycle.wav",
-  "35": "windows/classic start.wav",
-  "36": "windows/classic tada.wav",
-  "37": "windows/windows xp pop-up blocked.wav",
-  "38":  "808/808-Clap07.wav",
-  "39":  "808/808-Cowbell2.wav",
-  "40":  "808/hihat.wav",
-  "41":  "808/808-Kicks33.wav",
-  "42":  "808/808-Conga1.wav",
-  "43":  "808/808-Snare25.wav",
-  "44":  "808/808-Tom3.wav",
-  "45":  "808/hihat.wav",
-  "46":  "808/808-Kicks33.wav",
-  "47":  "808/808-Conga1.wav",
-    /*
-  "38": "GB_Kit/GB_Crash.wav",
-  "39": "GB_Kit/GB_Hat_1.wav",
-  "40": "GB_Kit/GB_Hat_2.wav",
-  "41": "GB_Kit/GB_Hat_3.wav",
-  "42": "GB_Kit/GB_Hat_4.wav",
-  "43": "GB_Kit/GB_High_Tom.wav",
-  "44": "GB_Kit/GB_Kick_1.wav",
-  "45": "GB_Kit/GB_Kick_2.wav",
-  "46": "GB_Kit/GB_Kick_3.wav",
-  "47": "GB_Kit/GB_Kick_4.wav",
-  "48": "GB_Kit/GB_Kick_5.wav",
-  "49": "GB_Kit/GB_Low_Tom.wav",
-  "50": "GB_Kit/GB_Mid_Tom.wav",
-  "51": "GB_Kit/GB_Ride.wav",
-  "52": "GB_Kit/GB_Snare_1.wav",
-  "53": "GB_Kit/GB_Snare_2.wav",
-  "54": "GB_Kit/GB_Snare_3.wav",
-  "55": "GB_Kit/GB_Snare_4.wav",
-  "56": "GB_Kit/GB_Snare_5.wav",
-  "57": "GB_Kit/GB_Snare_6.wav",
-  "58": "GB_Kit/GB_Snare_7.wav",
-  "59": "GB_Kit/GB_Snare_8.wav",
-  "60": "GB_Kit/GB_Startup.wav",
-  "61": "GB_Kit/GB_Triangle.wav"
-
-}
-//
-//
-// var samples = {
-//   "0": "stabs/5601 BUZ+RAV.wav",
-//   "1": "stabs/5602 BUZ+RAV.wav",
-//   "2": "stabs/5603 BUZ+RAV.wav",
-//   "3": "stabs/5604 BUZ+RAV.wav",
-//   "4": "stabs/5605 BUZ+RAV.wav",
-//   "5": "stabs/5606 BUZ+RAV.wav",
-//   "6": "stabs/5607 BUZ+RAV.wav",
-//   "7": "stabs/5608 BUZ+RAV.wav",
-//   "8": "stabs/5609 BUZ+RAV.wav",
-//   "9": "stabs/5610 BUZ+RAV.wav",
-//   "10": "stabs/5611 BUZ+RAV.wav",
-//   "11": "stabs/5612 BUZ+RAV.wav",
-//   "12": "stabs/5701 BUZ.CHD.wav",
-//   "13": "stabs/5702 BUZ.CHD.wav",
-//   "14": "stabs/5703 BUZ.CHD.wav",
-//   "15": "stabs/5704 BUZ.CHD.wav",
-//   "16": "stabs/5705 BUZ.CHD.wav",
-//   "17": "stabs/5706 BUZ.CHD.wav",
-//   "18": "stabs/5707 BUZ.CHD.wav",
-//   "19": "stabs/5708 BUZ.CHD.wav",
-//   "20": "stabs/5709 BUZ.CHD.wav",
-//   "21": "stabs/5710 BUZ.CHD.wav",
-//   "22": "stabs/5711 BUZ.CHD.wav",
-//   "23": "stabs/5712 BUZ.CHD.wav",
-//   "24": "stabs/5801 BUZ+BLP.wav",
-//   "25": "stabs/5802 BUZ+BLP.wav",
-//   "26": "stabs/5803 BUZ+BLP.wav",
-//   "27": "stabs/5804 BUZ+BLP.wav",
-//   "28": "stabs/5805 BUZ+BLP.wav",
-//   "29": "stabs/5806 BUZ+BLP.wav",
-//   "30": "stabs/5807 BUZ+BLP.wav",
-//   "31": "stabs/5808 BUZ+BLP.wav",
-//   "32": "stabs/5809 BUZ+BLP.wav",
-//   "33": "stabs/5810 BUZ+BLP.wav",
-//   "34": "stabs/5811 BUZ+BLP.wav",
-//   "35": "stabs/Hoover 02.wav",
-//   "36": "stabs/Hoover 03.wav",
-//   "37": "stabs/Hoover 04.wav",
-//   "38": "stabs/Hoover 05.wav",
-//   "39": "stabs/Hoover 06.wav",
-//   "40": "stabs/Hoover 07.wav",
-//   "41": "stabs/Hoover 08.wav",
-//   "42": "stabs/Stab 1.WAV",
-//   "43": "stabs/Stab 2.WAV",
-//   "44": "stabs/Stab 3.WAV",
-//   "45": "stabs/Stab 4.wav",
-//   "46": "stabs/Stab 5.wav",
-//   "47": "stabs/Stab 6.wav",
-//   "48": "stabs/Stab 7.wav",
-//   "49": "stabs/anastastab.wav",
-//   "50": "stabs/cyclnpno.wav",
-//   "51": "stabs/letthebasskick.wav",
-//   "52": "stabs/old skool bizz 00.wav",
-//   "53": "stabs/old skool bizz 01.wav",
-//   "54": "stabs/old skool bizz 02.wav",
-//   "55": "stabs/old skool bizz 03.wav",
-//   "56": "stabs/old skool bizz 04.wav",
-//   "57": "stabs/old skool bizz 05.wav",
-//   "58": "stabs/old skool bizz 06.wav",
-//   "59": "stabs/old skool bizz 07.wav",
-//   "60": "stabs/old skool bizz 08.wav",
-//   "61": "stabs/old skool bizz 09.wav",
-//   "62": "stabs/old skool bizz 10.wav"
-//   */
- }
 
 var buffers = {}
 
