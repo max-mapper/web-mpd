@@ -187,7 +187,6 @@ var sampleGets = Object.keys(samples).map(function(k) {
 
 parallel(sampleGets, function(err) {
   if (err) return console.error(err)
-  console.log('loaded samples')
   connect()
 })
 
@@ -230,7 +229,6 @@ function connect() {
       if (recording) {
         var firstStop = recorded.length === 0
         if (recordBuffer.length) storeRecording(recordBuffer)
-        console.log('stop recording')
         recording = false
         if (firstStop) {
           startTime = Date.now()
@@ -250,7 +248,6 @@ function startRecording() {
   recording = true
   if (!startTime) startTime = Date.now()
   recordBuffer = []
-  console.log('start recording')
 }
 
 function storeRecording(buffer) {
@@ -295,7 +292,7 @@ function trigger(pressed, key, evt) {
   lastVal = evt[2] * Math.random() * 10
   if (on[pressed]) {
     // stream.write(JSON.stringify(evt))
-    h1.innerText = pressed
+    // h1.innerText = pressed
     play(buffer, velocity)
   }
 }
