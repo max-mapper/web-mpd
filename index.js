@@ -3,11 +3,6 @@ var vkey = require('vkey')
 var nets = require('nets')
 var parallel = require('run-parallel')
 
-// Default sample map:
-var samples = require('./keyMap.json');
-
-// var grid = require('splash-grid')
-
 var context = new (window.AudioContext)()
 
 var keyNames = {
@@ -22,6 +17,7 @@ var keyNames = {
   '\\': 'backslash',
   '-': 'minus',
   '=': 'equals',
+  '<space>': 'record',
 }
 
 var off = {
@@ -43,19 +39,62 @@ var off = {
   // "128-65": '15'
 }
 
+var samples = {
+  'z':  '808/808-Clap07.wav',
+  'x':  '808/808-Cowbell2.wav',
+  'c':  '808/hihat.wav',
+  'v':  '808/808-Kicks33.wav',
+  'a':  '808/808-Conga1.wav',
+  's':  '808/808-Snare25.wav',
+  'd':  '808/808-Tom3.wav',
+  'f':  'windows/Windows XP Balloon.wav',
+  'q':  'windows/Windows XP Battery Critical.wav',
+  'w':  'windows/Windows XP Battery Low.wav',
+  'e': 'windows/Windows XP Critical Stop.wav',
+  'r': 'windows/Windows XP Default.wav',
+  'b': 'windows/Windows XP Ding.wav',
+  'n': 'windows/Windows XP Error.wav',
+  'm': 'windows/Windows XP Exclamation.wav',
+  'g': 'windows/Windows XP Hardware Fail.wav',
+  'h': 'windows/Windows XP Hardware Insert.wav',
+  'j': 'windows/Windows XP Hardware Remove.wav',
+  't': 'windows/Windows XP Information Bar.wav',
+  'y': 'windows/Windows XP Logoff Sound.wav',
+  'u': 'windows/Windows XP Logon Sound.wav',
+  '5': 'windows/Windows XP Menu Command.wav',
+  '6': 'windows/Windows XP Notify.wav',
+  '7': 'windows/Windows XP Print complete.wav',
+  '1': 'windows/Windows XP Recycle.wav',
+  '2': 'windows/Windows XP Ringin.wav',
+  '3': 'windows/Windows XP Ringout.wav',
+  '4': 'windows/Windows XP Shutdown.wav',
+  '8': 'windows/Windows XP Start.wav',
+  '9': 'windows/Windows XP Startup.wav',
+  '0': 'windows/classic chimes.wav',
+  'i': 'windows/classic chord.wav',
+  'o': 'windows/classic ding.wav',
+  '[': 'windows/classic notify.wav',
+  'k': 'windows/classic recycle.wav',
+  'l': 'windows/classic start.wav',
+  'p': 'windows/classic tada.wav',
+  'backtick': 'windows/windows xp pop-up blocked.wav',
+  'comma':  '808/808-Clap07.wav',
+  'period':  '808/808-Cowbell2.wav',
+  'forwardslash':  '808/hihat.wav',
+  'semicolon':  '808/808-Kicks33.wav',
+  'quote':  '808/808-Conga1.wav',
+  'openbracket':  '808/808-Snare25.wav',
+  'closebracket':  '808/808-Tom3.wav',
+  'backslash':  '808/hihat.wav',
+  'minus':  '808/808-Kicks33.wav',
+  'equals':  '808/808-Conga1.wav',
+ }
 
 var buffers = {}
 
-var sampleGets = Object.keys(samples).map(function(k) {
-  return function(cb) {
-    nets('samples/' + samples[k], function(err, resp, buff) {
-      if (err) return cb(err)
-  		context.decodeAudioData(buff.buffer, function(buffer) {
-        buffers[k] = buffer
-        cb()
-  		}, cb)
-    })
-  }
+var sampleGets = Object.keys(samples).map(function(id) {
+  var url = 'samples/' + samples[id]
+  return downloadAudio.bind(null, id, url)
 })
 
 parallel(sampleGets, function(err) {
@@ -63,30 +102,20 @@ parallel(sampleGets, function(err) {
   connect()
 })
 
-function play(buff, gain) {
-  var source = context.createBufferSource()
-  var gainNode = context.createGain()
-  source.buffer = buff
-  gainNode.gain.value = gain || 1
-  source.connect(gainNode)
-  gainNode.connect(context.destination)
-  source.start(0)
-}
-
 var recorded = []
 var recordBuffer, startTime, lastVal, stream
 var recording = false
 
 function connect() {
-  // stream = ws('ws://localhost:8343')
   
   window.addEventListener('keydown', function(e) {
     var pressed = vkey[e.keyCode]
-    pressed = keyNames[pressed] || pressed
+    pressed = (keyNames[pressed] || pressed).toLowerCase()
     dispatch([pressed, null, 127], pressed)
   })
 
-  // stream.on('data', parseEvent)
+  document.documentElement.addEventListener('drop', doDrop)
+  document.documentElement.addEventListener('dragover', dragover)
   
   function parseEvent(o) {
     var evt = JSON.parse(o)
@@ -113,9 +142,29 @@ function connect() {
       }
       return
     }
-    if (recording && on[pressed]) recordBuffer.push({data: evt, time: Date.now() - startTime})
+    if (recording && buffers[pressed]) recordBuffer.push({data: evt, time: Date.now() - startTime})
     trigger(pressed, key, evt)
   }
+}
+
+function downloadAudio(id, url, cb){
+  nets(url, function(err, resp, buff) {
+    if (err) return cb(err)
+    context.decodeAudioData(buff.buffer, function(buffer) {
+      buffers[id] = buffer
+      cb()
+    }, cb)
+  })
+}
+
+function play(buff, gain) {
+  var source = context.createBufferSource()
+  var gainNode = context.createGain()
+  source.buffer = buff
+  gainNode.gain.value = gain || 1
+  source.connect(gainNode)
+  gainNode.connect(context.destination)
+  source.start(0)
 }
 
 function startRecording() {
@@ -131,31 +180,40 @@ function storeRecording(buffer) {
   })
 }
 
+function dragover(event) {
+  event.preventDefault()
+  event.stopPropagation()
+}
+function doDrop(event) {
+  event.preventDefault()
+  event.stopPropagation()
+  var target = event.target
+  if (!target.classList.contains('keyboard-key')) return
+  var key = target.getAttribute('data-key')
+  var url = 'http://crossorigin.me/'+event.dataTransfer.getData('URL')
+  downloadAudio(key, url, function(){})
+}
+
 function playback(start, idx) {
   var evt = recorded[idx]
   if (!evt && recorded.length) {
     startTime = Date.now()
     return playback(startTime, 0)
   }
+  if (!evt) return
   var current = Date.now() - start
   var time = evt.time - current
   setTimeout(function() {
-    var pressed1 = evt.data.slice(0, 2).join('-')
-    var pressed2 = evt.data.slice(0, 1).join('-')
-    var key = getKey(pressed1)
-    if (key) {
-      trigger(pressed1, key, evt.data)
-    } else {
-      key = getKey(pressed2)
-      if (key) trigger(pressed2, key, evt.data)
-    }
+    var pressed = evt.data[0]
+    trigger(pressed, pressed, evt.data)
     idx++
     playback(start, idx)
   }, time)
 }
 
 function trigger(pressed, key, evt) {
-  var velocity = evt[2]
+  // var velocity = evt[2]
+  var velocity = null
   var buffer = buffers[key]
   if (!buffer) return
   if (velocity) {
@@ -164,7 +222,7 @@ function trigger(pressed, key, evt) {
     buffer = buffers[key + '-' + velocityRange] || buffer
   }
   lastVal = evt[2] * Math.random() * 10
-  if (on[pressed]) {
+  if (pressed) {
     showKeypress(pressed)
     play(buffer, velocity)
   }
@@ -181,10 +239,7 @@ function showKeypress(pressed) {
 }
 
 function getKey(pressed) {
-  var onKey = on[pressed]
-  var offKey = off[pressed]
-  var key = onKey || offKey
-  return key
+  return pressed
 }
 
 function scale( x, fromLow, fromHigh, toLow, toHigh ) {
