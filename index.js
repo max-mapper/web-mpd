@@ -15,6 +15,20 @@ var context = new (window.webkitAudioContext || window.AudioContext)()
 //document.body.appendChild(h1)
 //h1.setAttribute('style', 'font-size: 500px; font-family: Helvetica; margin: 0; padding: 0; color: #FF851B;')
 
+var keyNames = {
+  '`': 'backtick',
+  ',': 'comma',
+  '.': 'period',
+  '/': 'forwardslash',
+  ';': 'semicolon',
+  '\'': 'quote',
+  '[': 'openbracket',
+  ']': 'closebracket',
+  '\\': 'backslash',
+  '-': 'minus',
+  '=': 'equals',
+}
+
 var off = {
   // "129-67": '0',
   // "129-69": '1',
@@ -75,6 +89,16 @@ var samples = {
   "35": "windows/classic start.wav",
   "36": "windows/classic tada.wav",
   "37": "windows/windows xp pop-up blocked.wav",
+  "38":  "808/808-Clap07.wav",
+  "39":  "808/808-Cowbell2.wav",
+  "40":  "808/hihat.wav",
+  "41":  "808/808-Kicks33.wav",
+  "42":  "808/808-Conga1.wav",
+  "43":  "808/808-Snare25.wav",
+  "44":  "808/808-Tom3.wav",
+  "45":  "808/hihat.wav",
+  "46":  "808/808-Kicks33.wav",
+  "47":  "808/808-Conga1.wav",
     /*
   "38": "GB_Kit/GB_Crash.wav",
   "39": "GB_Kit/GB_Hat_1.wav",
@@ -209,6 +233,7 @@ function connect() {
   
   window.addEventListener('keydown', function(e) {
     var pressed = vkey[e.keyCode]
+    pressed = keyNames[pressed] || pressed
     dispatch([pressed, null, 127], pressed)
   })
 
@@ -224,6 +249,7 @@ function connect() {
   
   function dispatch(evt, pressed) {
     var key = getKey(pressed)
+    console.log('key:', key)
     if (!key) return
     if (key === 'record') {
       if (recording) {
@@ -282,6 +308,7 @@ function playback(start, idx) {
 
 function trigger(pressed, key, evt) {
   var velocity = evt[2]
+  console.log('buffers[key]:', buffers[key])
   var buffer = buffers[key]
   if (!buffer) return
   if (velocity) {
@@ -290,6 +317,7 @@ function trigger(pressed, key, evt) {
     buffer = buffers[key + '-' + velocityRange] || buffer
   }
   lastVal = evt[2] * Math.random() * 10
+  console.log('on[pressed]:', on[pressed])
   if (on[pressed]) {
     showKeypress(pressed)
     play(buffer, velocity)
@@ -297,6 +325,7 @@ function trigger(pressed, key, evt) {
 }
 
 function showKeypress(pressed) {
+  console.log('show:', pressed)
   var keyEl = document.querySelector('li[data-key="'+pressed.toLowerCase()+'"]')
   if (keyEl) {
     keyEl.classList.add('pressed')
@@ -307,6 +336,7 @@ function showKeypress(pressed) {
 }
 
 function getKey(pressed) {
+  console.log('getKey:', pressed)
   var onKey = on[pressed]
   var offKey = off[pressed]
   var key = onKey || offKey
