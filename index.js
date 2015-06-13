@@ -3,97 +3,25 @@ var vkey = require('vkey')
 var nets = require('nets')
 var parallel = require('run-parallel')
 
+var keyNames = require('./config/keyNames');
+
 var context = new (window.AudioContext)()
 
-var keyNames = {
-  '`': 'backtick',
-  ',': 'comma',
-  '.': 'period',
-  '/': 'forwardslash',
-  ';': 'semicolon',
-  '\'': 'quote',
-  '[': 'openbracket',
-  ']': 'closebracket',
-  '\\': 'backslash',
-  '-': 'minus',
-  '=': 'equals',
-  '<space>': 'record',
+var oldSamples = localStorage.getItem('samples');
+var samples;
+if (oldSamples) {
+  samples = JSON.parse(oldSamples);
+} else {
+  samples = require('./config/samples');
+  for (var key in samples) {
+    samples[key] = 'samples/' + samples[key];
+  }
 }
-
-var off = {
-  // "129-67": '0',
-  // "129-69": '1',
-  // "129-71": '2',
-  // "129-72": '3',
-  // "129-60": '4',
-  // "129-62": '5',
-  // "129-64": '6',
-  // "129-65": '7',
-  // "128-67": '8',
-  // "128-69": '9',
-  // "128-71": '10',
-  // "128-72": '11',
-  // "128-60": '12',
-  // "128-62": '13',
-  // "128-64": '14',
-  // "128-65": '15'
-}
-
-var samples = {
-  'z':  '808/808-Clap07.wav',
-  'x':  '808/808-Cowbell2.wav',
-  'c':  '808/hihat.wav',
-  'v':  '808/808-Kicks33.wav',
-  'a':  '808/808-Conga1.wav',
-  's':  '808/808-Snare25.wav',
-  'd':  '808/808-Tom3.wav',
-  'f':  'windows/Windows XP Balloon.wav',
-  'q':  'windows/Windows XP Battery Critical.wav',
-  'w':  'windows/Windows XP Battery Low.wav',
-  'e': 'windows/Windows XP Critical Stop.wav',
-  'r': 'windows/Windows XP Default.wav',
-  'b': 'windows/Windows XP Ding.wav',
-  'n': 'windows/Windows XP Error.wav',
-  'm': 'windows/Windows XP Exclamation.wav',
-  'g': 'windows/Windows XP Hardware Fail.wav',
-  'h': 'windows/Windows XP Hardware Insert.wav',
-  'j': 'windows/Windows XP Hardware Remove.wav',
-  't': 'windows/Windows XP Information Bar.wav',
-  'y': 'windows/Windows XP Logoff Sound.wav',
-  'u': 'windows/Windows XP Logon Sound.wav',
-  '5': 'windows/Windows XP Menu Command.wav',
-  '6': 'windows/Windows XP Notify.wav',
-  '7': 'windows/Windows XP Print complete.wav',
-  '1': 'windows/Windows XP Recycle.wav',
-  '2': 'windows/Windows XP Ringin.wav',
-  '3': 'windows/Windows XP Ringout.wav',
-  '4': 'windows/Windows XP Shutdown.wav',
-  '8': 'windows/Windows XP Start.wav',
-  '9': 'windows/Windows XP Startup.wav',
-  '0': 'windows/classic chimes.wav',
-  'i': 'windows/classic chord.wav',
-  'o': 'windows/classic ding.wav',
-  '[': 'windows/classic notify.wav',
-  'k': 'windows/classic recycle.wav',
-  'l': 'windows/classic start.wav',
-  'p': 'windows/classic tada.wav',
-  'backtick': 'windows/windows xp pop-up blocked.wav',
-  'comma':  '808/808-Clap07.wav',
-  'period':  '808/808-Cowbell2.wav',
-  'forwardslash':  '808/hihat.wav',
-  'semicolon':  '808/808-Kicks33.wav',
-  'quote':  '808/808-Conga1.wav',
-  'openbracket':  '808/808-Snare25.wav',
-  'closebracket':  '808/808-Tom3.wav',
-  'backslash':  '808/hihat.wav',
-  'minus':  '808/808-Kicks33.wav',
-  'equals':  '808/808-Conga1.wav',
- }
 
 var buffers = {}
 
 var sampleGets = Object.keys(samples).map(function(id) {
-  var url = 'samples/' + samples[id]
+  var url = samples[id]
   return downloadAudio.bind(null, id, url)
 })
 
@@ -151,10 +79,18 @@ function downloadAudio(id, url, cb){
   nets(url, function(err, resp, buff) {
     if (err) return cb(err)
     context.decodeAudioData(buff.buffer, function(buffer) {
+      samples[id] = url
+      persistConfig()
+      
       buffers[id] = buffer
       cb()
     }, cb)
   })
+}
+
+function persistConfig(){
+  var json = JSON.stringify(samples);
+  localStorage.setItem('samples', json);
 }
 
 function play(buff, gain) {
