@@ -291,9 +291,18 @@ function trigger(pressed, key, evt) {
   }
   lastVal = evt[2] * Math.random() * 10
   if (on[pressed]) {
-    // stream.write(JSON.stringify(evt))
-    // h1.innerText = pressed
+    showKeypress(pressed)
     play(buffer, velocity)
+  }
+}
+
+function showKeypress(pressed) {
+  var keyEl = document.querySelector('li[data-key="'+pressed.toLowerCase()+'"]')
+  if (keyEl) {
+    keyEl.classList.add('pressed')
+    setTimeout(function(){
+      keyEl.classList.remove('pressed')
+    }, 200)
   }
 }
 
