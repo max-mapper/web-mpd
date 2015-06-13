@@ -3,26 +3,11 @@ var vkey = require('vkey')
 var nets = require('nets')
 var parallel = require('run-parallel')
 
-// Default sample map:
-var samples = require('./keyMap.json');
-
-// var grid = require('splash-grid')
+var samples = require('./config/samples.json')
+var on = require('./config/keyMap.json')
+var keyNames = require('./config/keyNames')
 
 var context = new (window.AudioContext)()
-
-var keyNames = {
-  '`': 'backtick',
-  ',': 'comma',
-  '.': 'period',
-  '/': 'forwardslash',
-  ';': 'semicolon',
-  '\'': 'quote',
-  '[': 'openbracket',
-  ']': 'closebracket',
-  '\\': 'backslash',
-  '-': 'minus',
-  '=': 'equals',
-}
 
 var off = {
   // "129-67": '0',
@@ -42,7 +27,6 @@ var off = {
   // "128-64": '14',
   // "128-65": '15'
 }
-
 
 var buffers = {}
 
