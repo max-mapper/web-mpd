@@ -2,6 +2,7 @@ var ws = require('websocket-stream')
 var vkey = require('vkey')
 var nets = require('nets')
 var parallel = require('run-parallel')
+var baudio = require('webaudio')
 
 var samples = require('./config/samples.json')
 var on = require('./config/keyMap.json')
@@ -20,6 +21,16 @@ if (oldSamples) {
   }
 }
 
+/*  Buffers & Baudios:
+ *
+ *  When a key is pressed, we check if there is a baudio
+ *  function for that key in the baudios hash.
+ *
+ *  If there is, we'll run a baudio function for the keypress.
+ * 
+ *  If there isn't, we'll play any buffer from the buffers.
+ */
+var baudios = {}
 var buffers = {}
 
 var sampleGets = Object.keys(samples).map(function(id) {
@@ -78,16 +89,39 @@ function connect() {
 }
 
 function downloadAudio(id, url, cb){
+
+  url = correctBaudioLinks(url)
+
   nets(url, function(err, resp, buff) {
     if (err) return cb(err)
-    context.decodeAudioData(buff.buffer, function(buffer) {
-      samples[id] = url
-      persistConfig()
-      
-      buffers[id] = buffer
-      cb()
-    }, cb)
+
+    samples[id] = url
+    persistConfig()
+ 
+    if (url.indexOf('studio.substack.net') !== -1) {
+
+      try{
+        var stringContent = buff.toString();
+        baudios[id] = Function(stringContent)
+      } catch (e){}
+
+    } else {
+
+      context.decodeAudioData(buff.buffer, function(buffer) {
+       
+        buffers[id] = buffer
+        cb()
+      }, cb)
+    }
   })
+}
+
+// Baudio links can be converted to references to functions:
+function correctBaudioLinks(url){
+  if (url.indexOf('studio.substack.net') !== -1) {
+    return url.split('?')[0] + '.js'
+  }
+  return url;
 }
 
 function persistConfig(){
@@ -128,7 +162,9 @@ function doDrop(event) {
   var target = event.target
   if (!target.classList.contains('keyboard-key')) return
   var key = target.getAttribute('data-key')
-  var url = 'http://crossorigin.me/'+event.dataTransfer.getData('URL')
+  var reqUrl = event.dataTransfer.getData('URL')
+
+  var url = 'http://crossorigin.me/'+reqUrl
   downloadAudio(key, url, function(){})
 }
 
