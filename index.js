@@ -1,7 +1,7 @@
 var ws = require('websocket-stream')
 var vkey = require('vkey')
 var nets = require('nets')
-var parallel = require('run-parallel')
+var async = require('async')
 var baudio = require('webaudio')
 var debounce = require('debounce')
 
@@ -37,11 +37,14 @@ var buffers = {}
 
 var sampleGets = Object.keys(samples).map(function(id) {
   var url = samples[id]
-  return downloadAudio.bind(null, id, url)
+  return async.retry.bind(async, 3, downloadAudio.bind(null, id, url));
 })
 
-parallel(sampleGets, function(err) {
-  if (err) return console.error(err)
+async.parallel(sampleGets, function(err) {
+  if (err) {
+    alert("Problem loading initial samples.  Try reloading or dragging new samples onto keys.")
+    return console.error(err)
+  }
   connect()
 })
 
