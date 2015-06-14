@@ -3,6 +3,7 @@ var vkey = require('vkey')
 var nets = require('nets')
 var parallel = require('run-parallel')
 var baudio = require('webaudio')
+var debounce = require('debounce')
 
 var samples = require('./config/samples.json')
 var on = require('./config/keyMap.json')
@@ -10,14 +11,14 @@ var keyNames = require('./config/keyNames')
 
 var context = new (window.AudioContext)()
 
-var oldSamples = localStorage.getItem('samples');
-var samples;
+var oldSamples = localStorage.getItem('samples')
+var samples
 if (oldSamples) {
-  samples = JSON.parse(oldSamples);
+  samples = JSON.parse(oldSamples)
 } else {
-  samples = require('./config/samples');
+  samples = require('./config/samples')
   for (var key in samples) {
-    samples[key] = 'samples/' + samples[key];
+    samples[key] = 'samples/' + samples[key]
   }
 }
 
@@ -31,6 +32,7 @@ if (oldSamples) {
  *  If there isn't, we'll play any buffer from the buffers.
  */
 var baudios = {}
+var activeBaudios = {}
 var buffers = {}
 
 var sampleGets = Object.keys(samples).map(function(id) {
@@ -57,6 +59,10 @@ function connect() {
 
   document.documentElement.addEventListener('drop', doDrop)
   document.documentElement.addEventListener('dragover', dragover)
+  console.log('ready')
+
+  var channel = baudio(playBaudio)
+  channel.play()
   
   function parseEvent(o) {
     var evt = JSON.parse(o)
@@ -88,9 +94,16 @@ function connect() {
   }
 }
 
-function downloadAudio(id, url, cb){
+function playBaudio(time) {
+  var total = 0
+  Object.keys(activeBaudios).forEach(function(id){
+    var baudio = activeBaudios[id]
+    total += baudio.play(time)
+  })
+  return total
+}
 
-  url = correctBaudioLinks(url)
+function downloadAudio(id, url, cb){
 
   nets(url, function(err, resp, buff) {
     if (err) return cb(err)
@@ -101,15 +114,21 @@ function downloadAudio(id, url, cb){
     if (url.indexOf('studio.substack.net') !== -1) {
 
       try{
-        var stringContent = buff.toString();
-        baudios[id] = Function(stringContent)
-      } catch (e){}
+        var stringContent = buff.toString()
+        baudios[id] = Function(stringContent)()
+        delete buffers[id]
+        cb()
+      } catch (e){
+        console.error(e)
+        cb(err)
+      }
 
     } else {
 
       context.decodeAudioData(buff.buffer, function(buffer) {
        
         buffers[id] = buffer
+        delete baudios[id]
         cb()
       }, cb)
     }
@@ -121,12 +140,12 @@ function correctBaudioLinks(url){
   if (url.indexOf('studio.substack.net') !== -1) {
     return url.split('?')[0] + '.js'
   }
-  return url;
+  return url
 }
 
 function persistConfig(){
-  var json = JSON.stringify(samples);
-  localStorage.setItem('samples', json);
+  var json = JSON.stringify(samples)
+  localStorage.setItem('samples', json)
 }
 
 function play(buff, gain) {
@@ -163,7 +182,7 @@ function doDrop(event) {
   if (!target.classList.contains('keyboard-key')) return
   var key = target.getAttribute('data-key')
   var reqUrl = event.dataTransfer.getData('URL')
-
+  reqUrl = correctBaudioLinks(reqUrl)
   var url = 'http://crossorigin.me/'+reqUrl
   downloadAudio(key, url, function(){})
 }
@@ -187,18 +206,31 @@ function playback(start, idx) {
 
 function trigger(pressed, key, evt) {
   // var velocity = evt[2]
-  var velocity = null
+  // var velocity = null
   var buffer = buffers[key]
-  if (!buffer) return
-  if (velocity) {
-    var velocityRange = Math.floor(velocity / 16)
-    velocity = scale(velocity, 0, 127, 0, 1)
-    buffer = buffers[key + '-' + velocityRange] || buffer
-  }
-  lastVal = evt[2] * Math.random() * 10
-  if (pressed) {
-    showKeypress(pressed)
-    play(buffer, velocity)
+  var baudioFn = baudios[key]
+  if (!pressed) return
+  showKeypress(pressed)
+  
+  if (buffer) {
+    // PLAY SAMPLE
+    play(buffer)
+  } else if (baudioFn) {
+    // PLAY BAUDIO
+    if (!activeBaudios[key]) {
+      var newActiveBaudio = {
+        play: baudioFn,
+        resetTimeout: debounce(function(){
+          console.log('timeout')
+          delete activeBaudios[key]
+        }, 100),
+      }
+      activeBaudios[key] = newActiveBaudio
+      newActiveBaudio.resetTimeout()
+    } else {
+      var activeBaudio = activeBaudios[key]
+      activeBaudio.resetTimeout()
+    }
   }
 }
 
