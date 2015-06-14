@@ -7,6 +7,15 @@ body {
     font: 71%/1.5 Verdana, Sans-Serif;
     background: #eee;
 }
+
+section.instructions{
+  display:block;
+}
+
+section.instructions>p{
+ padding-bottom:10px; 
+}
+
 #container {
     margin: 100px auto;
     width: 688px;
