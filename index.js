@@ -128,6 +128,8 @@ function downloadAudio(id, url, cb){
 
     } else {
 
+      buff = ensureBufferType(buff)
+
       context.decodeAudioData(buff.buffer, function(buffer) {
        
         buffers[id] = buffer
@@ -136,6 +138,22 @@ function downloadAudio(id, url, cb){
       }, cb)
     }
   })
+}
+
+function ensureBufferType(buff){
+  if (!(buff instanceof Uint8Array)){
+    buff = toArrayBuffer(buff)
+  }
+  return buff
+}
+
+function toArrayBuffer(buffer) {
+    var ab = new ArrayBuffer(buffer.length);
+    var view = new Uint8Array(ab);
+    for (var i = 0; i < buffer.length; ++i) {
+        view[i] = buffer[i];
+    }
+    return view
 }
 
 // Baudio links can be converted to references to functions:
