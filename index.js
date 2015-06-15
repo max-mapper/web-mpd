@@ -9,7 +9,7 @@ var samples = require('./config/samples.json')
 var on = require('./config/keyMap.json')
 var keyNames = require('./config/keyNames')
 
-var context = new (window.AudioContext)()
+var context = new (window.AudioContext || window.webkitAudioContext)()
 
 var oldSamples = localStorage.getItem('samples')
 var samples
