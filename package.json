@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "wzrd index.js:bundle.js"
+    "start": "wzrd index.js:bundle.js",
+    "deploy": "gh-pages-deploy",
+    "build": "browserify index.js -o bundle.js"
   },
   "author": "",
   "license": "ISC",
@@ -29,5 +31,12 @@
     "ws": "^0.6.3",
     "wzrd": "^1.0.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "gh-pages-deploy": "^0.3.0"
+  },
+  "gh-pages-deploy": {
+    "prep": [
+      "build"
+    ]
+  }
 }

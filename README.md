@@ -8,3 +8,4 @@ To install, run `npm install`.
 
 To run, run `npm start`.  This will start an auto-rebuilding [browserify](http://browserify.org/) script, generating a fresh `bundle.js` from your `index.js` file.
 
+(For maintainers) To deploy `gh-pages`, run `npm run deploy`
