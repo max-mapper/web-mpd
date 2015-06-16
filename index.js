@@ -63,11 +63,17 @@ function connect() {
   window.addEventListener('keydown', function(e) {
     var pressed = vkey[e.keyCode]
     pressed = (keyNames[pressed] || pressed).toLowerCase()
-    dispatch([pressed, null, 127], pressed)
+    onkeydown([pressed, null, 127], pressed)
   })
 
-  document.documentElement.addEventListener('drop', doDrop)
-  document.documentElement.addEventListener('dragover', dragover)
+  window.addEventListener('keyup', function(e) {
+    var pressed = vkey[e.keyCode]
+    pressed = (keyNames[pressed] || pressed).toLowerCase()
+    onkeyup([pressed, null, 127], pressed)
+  })
+
+  window.addEventListener('drop', doDrop)
+  window.addEventListener('dragover', dragover)
   console.log('ready')
 
   var channel = baudio(playBaudio)
@@ -78,10 +84,10 @@ function connect() {
     if (evt[2] === 0) return
     evt[2] = 127
     var pressed = evt.slice(0, 2).join('-')
-    dispatch(evt, pressed)
+    onkeydown(evt, pressed)
   }
   
-  function dispatch(evt, pressed) {
+  function onkeydown(evt, pressed) {
     var key = getKey(pressed)
     if (!key) return
     if (key === 'record') {
@@ -100,6 +106,19 @@ function connect() {
     }
     if (recording && buffers[pressed]) recordBuffer.push({data: evt, time: Date.now() - startTime})
     trigger(pressed, key, evt)
+  }
+
+  function onkeyup(evt, pressed) {
+    if (!pressed) return
+    var key = getKey(pressed)
+    if (!key) return
+    var baudioData = activeBaudios[key]
+    showKeypress(pressed)
+
+    if (baudioData) {
+      // UNPLAY BAUDIO
+      delete activeBaudios[key]
+    }
   }
 }
 
@@ -253,10 +272,10 @@ function trigger(pressed, key, evt) {
         }, 100),
       }
       activeBaudios[key] = newActiveBaudio
-      newActiveBaudio.resetTimeout()
+      // newActiveBaudio.resetTimeout()
     } else {
       var activeBaudio = activeBaudios[key]
-      activeBaudio.resetTimeout()
+      // activeBaudio.resetTimeout()
     }
   }
 }
