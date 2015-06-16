@@ -13,6 +13,7 @@ div#loading-screen{
   width:100%;
   height:100%;
   display:flex;
+  display:-webkit-flex;
   opacity:1.0;
   background-color:rgba(238,238,238,0.8);
 }
