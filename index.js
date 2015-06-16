@@ -45,8 +45,14 @@ async.parallel(sampleGets, function(err) {
     alert("Problem loading initial samples.  Try reloading or dragging new samples onto keys.")
     return console.error(err)
   }
+  removeLoadingScreen();
   connect()
 })
+
+function removeLoadingScreen(){
+  var a = document.getElementById('loading-screen')
+  a.remove()
+}
 
 var recorded = []
 var recordBuffer, startTime, lastVal, stream
