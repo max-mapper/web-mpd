@@ -248,10 +248,11 @@ function doDrop(event) {
 
 function playback(start, idx) {
   var evt = recorded[idx]
-  baudioStartTimes[idx] = start;
+  baudioStartTimes[idx] = start
 
   if (!evt && recorded.length) {
-    return playback(start, 0)
+     startTime = Date.now()
+     return playback(startTime, 0)
   }
   if (!evt) return
   var current = Date.now() - start
