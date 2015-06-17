@@ -31,7 +31,9 @@ if (oldSamples) {
  * 
  *  If there isn't, we'll play any buffer from the buffers.
  */
+var baudioStartTime;
 var baudios = {}
+var baudioStartTimes = {};
 var activeBaudios = {}
 var buffers = {}
 
@@ -90,6 +92,8 @@ function connect() {
   function onkeydown(evt, pressed) {
     var key = getKey(pressed)
     if (!key) return
+
+    // If recording
     if (key === 'record') {
       if (recording) {
         var firstStop = recorded.length === 0
@@ -104,8 +108,11 @@ function connect() {
       }
       return
     }
+
+    // Normal key playback
     if (recording && buffers[pressed]) recordBuffer.push({data: evt, time: Date.now() - startTime})
     trigger(pressed, key, evt)
+
   }
 
   function onkeyup(evt, pressed) {
@@ -123,10 +130,16 @@ function connect() {
 }
 
 function playBaudio(time) {
+
+  if (!baudioStartTime){
+    baudioStartTime = Date.now()
+  }
+
   var total = 0
   Object.keys(activeBaudios).forEach(function(id){
     var baudio = activeBaudios[id]
-    total += baudio.play(time)
+    var localTime = ((baudio.started - baudioStartTime)/1000)
+    total += baudio.play(time-localTime)
   })
   return total
 }
@@ -235,9 +248,10 @@ function doDrop(event) {
 
 function playback(start, idx) {
   var evt = recorded[idx]
+  baudioStartTimes[idx] = start;
+
   if (!evt && recorded.length) {
-    startTime = Date.now()
-    return playback(startTime, 0)
+    return playback(start, 0)
   }
   if (!evt) return
   var current = Date.now() - start
@@ -251,10 +265,12 @@ function playback(start, idx) {
 }
 
 function trigger(pressed, key, evt) {
+
   // var velocity = evt[2]
   // var velocity = null
   var buffer = buffers[key]
   var baudioFn = baudios[key]
+  
   if (!pressed) return
   showKeypress(pressed)
   
@@ -262,10 +278,12 @@ function trigger(pressed, key, evt) {
     // PLAY SAMPLE
     play(buffer)
   } else if (baudioFn) {
+
     // PLAY BAUDIO
     if (!activeBaudios[key]) {
       var newActiveBaudio = {
         play: baudioFn,
+        started: Date.now(),
         resetTimeout: debounce(function(){
           console.log('timeout')
           delete activeBaudios[key]
@@ -275,7 +293,6 @@ function trigger(pressed, key, evt) {
       // newActiveBaudio.resetTimeout()
     } else {
       var activeBaudio = activeBaudios[key]
-      // activeBaudio.resetTimeout()
     }
   }
 }
