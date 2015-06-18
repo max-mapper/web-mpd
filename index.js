@@ -4,22 +4,32 @@ var nets = require('nets')
 var async = require('async')
 var baudio = require('webaudio')
 var debounce = require('debounce')
-
 var samples = require('./config/samples.json')
+
+var urlSerializer = require('./lib/urlSerializer')
+urlSerializer.stateChanged = function (oldSamples){
+  samples = oldSamples
+  loadSamples()
+}
+
 var on = require('./config/keyMap.json')
 var keyNames = require('./config/keyNames')
 
 var context = new (window.AudioContext || window.webkitAudioContext)()
 
-var oldSamples = localStorage.getItem('samples')
-var samples
+var oldSamples = urlSerializer.loadUrlConfig() || getLocalSamples()
 if (oldSamples) {
-  samples = JSON.parse(oldSamples)
+  samples = oldSamples
 } else {
   samples = require('./config/samples')
   for (var key in samples) {
     samples[key] = 'samples/' + samples[key]
   }
+}
+
+function getLocalSamples(){
+  var json = localStorage.getItem('samples');
+  return JSON.parse(json)
 }
 
 /*  Buffers & Baudios:
@@ -37,23 +47,34 @@ var baudioStartTimes = {};
 var activeBaudios = {}
 var buffers = {}
 
-var sampleGets = Object.keys(samples).map(function(id) {
-  var url = samples[id]
-  return async.retry.bind(async, 3, downloadAudio.bind(null, id, url));
-})
+loadSamples()
 
-async.parallel(sampleGets, function(err) {
-  if (err) {
-    alert("Problem loading initial samples.  Try reloading or dragging new samples onto keys.")
-    return console.error(err)
-  }
-  removeLoadingScreen();
-  connect()
-})
+function loadSamples(){
+  showLoadingScreen()
+  var sampleGets = Object.keys(samples).map(function(id) {
+    var url = samples[id]
+    return async.retry.bind(async, 3, downloadAudio.bind(null, id, url));
+  })
+
+  async.parallel(sampleGets, function(err) {
+    if (err) {
+      alert("Problem loading initial samples.  Try reloading or dragging new samples onto keys.")
+      return console.error(err)
+    }
+    removeLoadingScreen();
+    connect()
+  })
+}
 
 function removeLoadingScreen(){
   var a = document.getElementById('loading-screen')
-  a.remove()
+  a.className = 'hidden';
+}
+function showLoadingScreen(){
+  var a = document.getElementById('loading-screen')
+  if (a) {
+    a.classList.remove('hidden')
+  }
 }
 
 var recorded = []
@@ -149,9 +170,6 @@ function downloadAudio(id, url, cb){
   nets(url, function(err, resp, buff) {
     if (err) return cb(err)
 
-    samples[id] = url
-    persistConfig()
- 
     if (url.indexOf('studio.substack.net') !== -1) {
 
       try{
@@ -205,6 +223,7 @@ function correctBaudioLinks(url){
 function persistConfig(){
   var json = JSON.stringify(samples)
   localStorage.setItem('samples', json)
+  urlSerializer.saveUrlConfig(samples);
 }
 
 function play(buff, gain) {
@@ -243,6 +262,9 @@ function doDrop(event) {
   var reqUrl = event.dataTransfer.getData('URL')
   reqUrl = correctBaudioLinks(reqUrl)
   var url = 'http://crossorigin.me/'+reqUrl
+
+  samples[key] = url;
+  persistConfig()
   downloadAudio(key, url, function(){})
 }
 
