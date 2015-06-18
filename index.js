@@ -4,10 +4,14 @@ var nets = require('nets')
 var async = require('async')
 var baudio = require('webaudio')
 var debounce = require('debounce')
+var samples = require('./config/samples.json')
 
 var urlSerializer = require('./lib/urlSerializer')
+urlSerializer.stateChanged = function (oldSamples){
+  samples = oldSamples
+  loadSamples()
+}
 
-var samples = require('./config/samples.json')
 var on = require('./config/keyMap.json')
 var keyNames = require('./config/keyNames')
 
@@ -43,23 +47,34 @@ var baudioStartTimes = {};
 var activeBaudios = {}
 var buffers = {}
 
-var sampleGets = Object.keys(samples).map(function(id) {
-  var url = samples[id]
-  return async.retry.bind(async, 3, downloadAudio.bind(null, id, url));
-})
+loadSamples()
 
-async.parallel(sampleGets, function(err) {
-  if (err) {
-    alert("Problem loading initial samples.  Try reloading or dragging new samples onto keys.")
-    return console.error(err)
-  }
-  removeLoadingScreen();
-  connect()
-})
+function loadSamples(){
+  showLoadingScreen()
+  var sampleGets = Object.keys(samples).map(function(id) {
+    var url = samples[id]
+    return async.retry.bind(async, 3, downloadAudio.bind(null, id, url));
+  })
+
+  async.parallel(sampleGets, function(err) {
+    if (err) {
+      alert("Problem loading initial samples.  Try reloading or dragging new samples onto keys.")
+      return console.error(err)
+    }
+    removeLoadingScreen();
+    connect()
+  })
+}
 
 function removeLoadingScreen(){
   var a = document.getElementById('loading-screen')
-  a.remove()
+  a.className = 'hidden';
+}
+function showLoadingScreen(){
+  var a = document.getElementById('loading-screen')
+  if (a) {
+    a.classList.remove('hidden')
+  }
 }
 
 var recorded = []
