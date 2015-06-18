@@ -5,21 +5,27 @@ var async = require('async')
 var baudio = require('webaudio')
 var debounce = require('debounce')
 
+var urlSerializer = require('./lib/urlSerializer')
+
 var samples = require('./config/samples.json')
 var on = require('./config/keyMap.json')
 var keyNames = require('./config/keyNames')
 
 var context = new (window.AudioContext || window.webkitAudioContext)()
 
-var oldSamples = localStorage.getItem('samples')
-var samples
+var oldSamples = urlSerializer.loadUrlConfig() || getLocalSamples()
 if (oldSamples) {
-  samples = JSON.parse(oldSamples)
+  samples = oldSamples
 } else {
   samples = require('./config/samples')
   for (var key in samples) {
     samples[key] = 'samples/' + samples[key]
   }
+}
+
+function getLocalSamples(){
+  var json = localStorage.getItem('samples');
+  return JSON.parse(json)
 }
 
 /*  Buffers & Baudios:
@@ -149,9 +155,6 @@ function downloadAudio(id, url, cb){
   nets(url, function(err, resp, buff) {
     if (err) return cb(err)
 
-    samples[id] = url
-    persistConfig()
- 
     if (url.indexOf('studio.substack.net') !== -1) {
 
       try{
@@ -205,6 +208,7 @@ function correctBaudioLinks(url){
 function persistConfig(){
   var json = JSON.stringify(samples)
   localStorage.setItem('samples', json)
+  urlSerializer.saveUrlConfig(samples);
 }
 
 function play(buff, gain) {
@@ -243,6 +247,9 @@ function doDrop(event) {
   var reqUrl = event.dataTransfer.getData('URL')
   reqUrl = correctBaudioLinks(reqUrl)
   var url = 'http://crossorigin.me/'+reqUrl
+
+  samples[key] = url;
+  persistConfig()
   downloadAudio(key, url, function(){})
 }
 
