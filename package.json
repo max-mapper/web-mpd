@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "wzrd index.js:bundle.js",
+    "test": "node tests/index.js",
     "deploy": "gh-pages-deploy",
     "build": "browserify index.js -o bundle.js"
   },
@@ -32,7 +33,8 @@
     "wzrd": "^1.0.2"
   },
   "devDependencies": {
-    "gh-pages-deploy": "^0.3.0"
+    "gh-pages-deploy": "^0.3.0",
+    "tape": "^4.0.0"
   },
   "gh-pages-deploy": {
     "prep": [

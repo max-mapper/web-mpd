@@ -1,36 +1,20 @@
+// External Dependencies:
 var ws = require('websocket-stream')
 var vkey = require('vkey')
 var nets = require('nets')
 var async = require('async')
-var baudio = require('webaudio')
 var debounce = require('debounce')
-var samples = require('./config/samples.json')
 
-var urlSerializer = require('./lib/urlSerializer')
-urlSerializer.stateChanged = function (oldSamples){
-  samples = oldSamples
-  loadSamples()
-}
+// Internal Classes:
+var persister = require('./lib/persister')
+var player    = require('./lib/player')
 
+player.init()
+
+/*
+// Config Files:
 var on = require('./config/keyMap.json')
 var keyNames = require('./config/keyNames')
-
-var context = new (window.AudioContext || window.webkitAudioContext)()
-
-var oldSamples = urlSerializer.loadUrlConfig() || getLocalSamples()
-if (oldSamples) {
-  samples = oldSamples
-} else {
-  samples = require('./config/samples')
-  for (var key in samples) {
-    samples[key] = 'samples/' + samples[key]
-  }
-}
-
-function getLocalSamples(){
-  var json = localStorage.getItem('samples');
-  return JSON.parse(json)
-}
 
 /*  Buffers & Baudios:
  *
@@ -40,7 +24,6 @@ function getLocalSamples(){
  *  If there is, we'll run a baudio function for the keypress.
  * 
  *  If there isn't, we'll play any buffer from the buffers.
- */
 var baudioStartTime;
 var baudios = {}
 var baudioStartTimes = {};
@@ -98,20 +81,9 @@ function connect() {
   window.addEventListener('drop', doDrop)
   window.addEventListener('dragover', dragover)
   console.log('ready')
-
-  var channel = baudio(playBaudio)
-  channel.play()
-  
-  function parseEvent(o) {
-    var evt = JSON.parse(o)
-    if (evt[2] === 0) return
-    evt[2] = 127
-    var pressed = evt.slice(0, 2).join('-')
-    onkeydown(evt, pressed)
-  }
   
   function onkeydown(evt, pressed) {
-    var key = getKey(pressed)
+    var key = pressed
     if (!key) return
 
     // If recording
@@ -138,7 +110,7 @@ function connect() {
 
   function onkeyup(evt, pressed) {
     if (!pressed) return
-    var key = getKey(pressed)
+    var key = pressed
     if (!key) return
     var baudioData = activeBaudios[key]
     showKeypress(pressed)
@@ -150,81 +122,6 @@ function connect() {
   }
 }
 
-function playBaudio(time) {
-
-  if (!baudioStartTime){
-    baudioStartTime = Date.now()
-  }
-
-  var total = 0
-  Object.keys(activeBaudios).forEach(function(id){
-    var baudio = activeBaudios[id]
-    var localTime = ((baudio.started - baudioStartTime)/1000)
-    total += baudio.play(time-localTime)
-  })
-  return total
-}
-
-function downloadAudio(id, url, cb){
-
-  nets(url, function(err, resp, buff) {
-    if (err) return cb(err)
-
-    if (url.indexOf('studio.substack.net') !== -1) {
-
-      try{
-        var stringContent = buff.toString()
-        baudios[id] = Function(stringContent)()
-        delete buffers[id]
-        cb()
-      } catch (e){
-        console.error(e)
-        cb(err)
-      }
-
-    } else {
-
-      buff = ensureBufferType(buff)
-
-      context.decodeAudioData(buff.buffer, function(buffer) {
-       
-        buffers[id] = buffer
-        delete baudios[id]
-        cb()
-      }, cb)
-    }
-  })
-}
-
-function ensureBufferType(buff){
-  if (!(buff instanceof Uint8Array)){
-    buff = toArrayBuffer(buff)
-  }
-  return buff
-}
-
-function toArrayBuffer(buffer) {
-    var ab = new ArrayBuffer(buffer.length);
-    var view = new Uint8Array(ab);
-    for (var i = 0; i < buffer.length; ++i) {
-        view[i] = buffer[i];
-    }
-    return view
-}
-
-// Baudio links can be converted to references to functions:
-function correctBaudioLinks(url){
-  if (url.indexOf('studio.substack.net') !== -1) {
-    return url.split('?')[0] + '.js'
-  }
-  return url
-}
-
-function persistConfig(){
-  var json = JSON.stringify(samples)
-  localStorage.setItem('samples', json)
-  urlSerializer.saveUrlConfig(samples);
-}
 
 function play(buff, gain) {
   var source = context.createBufferSource()
@@ -253,20 +150,6 @@ function dragover(event) {
   event.preventDefault()
   event.stopPropagation()
 }
-function doDrop(event) {
-  event.preventDefault()
-  event.stopPropagation()
-  var target = event.target
-  if (!target.classList.contains('keyboard-key')) return
-  var key = target.getAttribute('data-key')
-  var reqUrl = event.dataTransfer.getData('URL')
-  reqUrl = correctBaudioLinks(reqUrl)
-  var url = 'http://crossorigin.me/'+reqUrl
-
-  samples[key] = url;
-  persistConfig()
-  downloadAudio(key, url, function(){})
-}
 
 function playback(start, idx) {
   var evt = recorded[idx]
@@ -287,53 +170,7 @@ function playback(start, idx) {
   }, time)
 }
 
-function trigger(pressed, key, evt) {
-
-  // var velocity = evt[2]
-  // var velocity = null
-  var buffer = buffers[key]
-  var baudioFn = baudios[key]
-  
-  if (!pressed) return
-  showKeypress(pressed)
-  
-  if (buffer) {
-    // PLAY SAMPLE
-    play(buffer)
-  } else if (baudioFn) {
-
-    // PLAY BAUDIO
-    if (!activeBaudios[key]) {
-      var newActiveBaudio = {
-        play: baudioFn,
-        started: Date.now(),
-        resetTimeout: debounce(function(){
-          console.log('timeout')
-          delete activeBaudios[key]
-        }, 100),
-      }
-      activeBaudios[key] = newActiveBaudio
-      // newActiveBaudio.resetTimeout()
-    } else {
-      var activeBaudio = activeBaudios[key]
-    }
-  }
-}
-
-function showKeypress(pressed) {
-  var keyEl = document.querySelector('li[data-key="'+pressed.toLowerCase()+'"]')
-  if (keyEl) {
-    keyEl.classList.add('pressed')
-    setTimeout(function(){
-      keyEl.classList.remove('pressed')
-    }, 200)
-  }
-}
-
-function getKey(pressed) {
-  return pressed
-}
-
 function scale( x, fromLow, fromHigh, toLow, toHigh ) {
   return ( x - fromLow ) * ( toHigh - toLow ) / ( fromHigh - fromLow ) + toLow
 }
+*/
