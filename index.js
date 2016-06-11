@@ -7,7 +7,7 @@ var debounce = require('debounce')
 var samples = require('./config/samples.json')
 
 var urlSerializer = require('./lib/urlSerializer')
-urlSerializer.stateChanged = function (oldSamples){
+urlSerializer.stateChanged = function (oldSamples) {
   samples = oldSamples
   loadSamples()
 }
@@ -166,7 +166,7 @@ function playBaudio(time) {
 }
 
 function downloadAudio(id, url, cb){
-
+  console.log(url)
   nets(url, function(err, resp, buff) {
     if (err) return cb()
 
@@ -185,7 +185,6 @@ function downloadAudio(id, url, cb){
     } else {
 
       buff = ensureBufferType(buff)
-
       context.decodeAudioData(buff.buffer)
       .then(function(buffer) {
         buffers[id] = buffer
