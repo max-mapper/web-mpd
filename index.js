@@ -38,7 +38,7 @@ function getLocalSamples(){
  *  function for that key in the baudios hash.
  *
  *  If there is, we'll run a baudio function for the keypress.
- * 
+ *
  *  If there isn't, we'll play any buffer from the buffers.
  */
 var baudioStartTime;
@@ -82,7 +82,7 @@ var recordBuffer, startTime, lastVal, stream
 var recording = false
 
 function connect() {
-  
+
   window.addEventListener('keydown', function(e) {
     var pressed = vkey[e.keyCode]
     pressed = (keyNames[pressed] || pressed).toLowerCase()
@@ -101,7 +101,7 @@ function connect() {
 
   var channel = baudio(playBaudio)
   channel.play()
-  
+
   function parseEvent(o) {
     var evt = JSON.parse(o)
     if (evt[2] === 0) return
@@ -109,7 +109,7 @@ function connect() {
     var pressed = evt.slice(0, 2).join('-')
     onkeydown(evt, pressed)
   }
-  
+
   function onkeydown(evt, pressed) {
     var key = getKey(pressed)
     if (!key) return
@@ -168,7 +168,7 @@ function playBaudio(time) {
 function downloadAudio(id, url, cb){
 
   nets(url, function(err, resp, buff) {
-    if (err) return cb(err)
+    if (err) return cb()
 
     if (url.indexOf('studio.substack.net') !== -1) {
 
@@ -178,20 +178,24 @@ function downloadAudio(id, url, cb){
         delete buffers[id]
         cb()
       } catch (e){
-        console.error(e)
-        cb(err)
+        console.error('problem decoding buffer string ' + url)
+        cb()
       }
 
     } else {
 
       buff = ensureBufferType(buff)
 
-      context.decodeAudioData(buff.buffer, function(buffer) {
-       
+      context.decodeAudioData(buff.buffer)
+      .then(function(buffer) {
         buffers[id] = buffer
         delete baudios[id]
         cb()
-      }, cb)
+      })
+      .catch(function(reason) {
+        console.error('problem decoding ' + url)
+        cb()
+      })
     }
   })
 }
@@ -293,10 +297,10 @@ function trigger(pressed, key, evt) {
   // var velocity = null
   var buffer = buffers[key]
   var baudioFn = baudios[key]
-  
+
   if (!pressed) return
   showKeypress(pressed)
-  
+
   if (buffer) {
     // PLAY SAMPLE
     play(buffer)
